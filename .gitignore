@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Build artifacts / packaging
+*.zip
+
+# Dependencies (ยังไม่มีตอนนี้ แต่กันไว้เผื่ออนาคต)
+/vendor/
+/node_modules/
+
+# Local env / secrets
+.env
+.env.*

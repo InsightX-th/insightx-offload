@@ -1,0 +1,51 @@
+/*
+ * Copyright (C) 2026 InsightX. GPLv3 or later. Original work by InsightX.
+ *
+ * Storage column in the Media Library list table.
+ */
+
+.column-isxs_storage {
+    width: 14em;
+}
+
+.isxs-ml-status {
+    display: inline-block;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.isxs-ml-status.isxs-ml-ok      { color: #007017; }
+.isxs-ml-status.isxs-ml-partial { color: #8a6100; }
+.isxs-ml-status.isxs-ml-failed  { color: #b32d2e; }
+.isxs-ml-status.isxs-ml-other   { color: #2271b1; }
+.isxs-ml-status.isxs-ml-pending { color: #646970; }
+.isxs-ml-status.isxs-ml-dataloss { color: #fff; background: #b32d2e; padding: 1px 6px; border-radius: 3px; }
+
+/* Detail line (failure reason / missing sizes) — kept small and clamped so a
+   long S3 error can't stretch the row. */
+.isxs-ml-detail {
+    display: block;
+    margin-top: 2px;
+    max-width: 22em;
+    color: #646970;
+    font-size: 11px;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.isxs-ml-offload.isxs-ml-busy {
+    pointer-events: none;
+    opacity: .6;
+}
+
+.isxs-ml-result {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+}
+
+.isxs-ml-result.isxs-ml-result-error { color: #b32d2e; }
+.isxs-ml-result.isxs-ml-result-ok    { color: #007017; }

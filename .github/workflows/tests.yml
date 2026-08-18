@@ -1,0 +1,26 @@
+name: Tests
+
+# Runs PHP syntax checks across supported PHP versions (PHP 7.4+)
+# on every push to main and every pull request.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.4', '8.0', '8.1', '8.2', '8.3' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Check PHP syntax
+        run: |
+          find . -type f -name "*.php" -not -path "./vendor/*" -exec php -l {} \;

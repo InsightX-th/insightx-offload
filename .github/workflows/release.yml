@@ -1,0 +1,28 @@
+name: Release
+
+# Runs only when a tag (e.g. v0.1.0) is pushed. `git archive` builds the zip
+# straight from that tag's tracked tree — untracked/gitignored paths
+# are never included since they were never committed, and .gitattributes
+# export-ignores dev-only files that ARE tracked (this workflow itself).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build zip
+        run: git archive --format=zip --prefix=insightx-offload/ -o "insightx-offload-${GITHUB_REF_NAME}.zip" "${GITHUB_REF_NAME}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: insightx-offload-${{ github.ref_name }}.zip
+          name: 'insightx-offload ${{ github.ref_name }}'
