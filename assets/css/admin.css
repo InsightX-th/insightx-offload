@@ -1337,6 +1337,18 @@
 
 /* ---------- Sync/Verify tool ---------- */
 
+.isxs-sync-status.is-stale {
+  color: var(--isxs-warn);
+  border-color: var(--isxs-warn);
+}
+.isxs-sync-status.is-stale .isxs-sync-status-text {
+  color: var(--isxs-warn);
+  font-weight: 600;
+}
+.isxs-sync-status.is-stale .isxs-conn-dot {
+  background: var(--isxs-warn);
+}
+
 .isxs-sync-result {
   margin-top: 12px;
   padding: 10px 14px;

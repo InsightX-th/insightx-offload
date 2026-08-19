@@ -58,6 +58,13 @@ class ISXM_Sync {
     const FILE_TTL = DAY_IN_SECONDS;
     /** Temp-file directory name under uploads/. */
     const SYNC_DIR_NAME = 'isxs-sync';
+    /** Option holding the unix timestamp of the last scan that finished
+     *  without error — used to nudge the user back to Sync when it has
+     *  gone stale (see last_run() / is_stale()). */
+    const LAST_RUN_OPTION = 'isxs_sync_last_run';
+    /** How long since the last clean scan before the status widget nudges
+     *  the user to run Sync again. */
+    const STALE_AFTER = 7 * DAY_IN_SECONDS;
 
     /* ---------------------------------------------------------------------
      * Expected keys
@@ -488,6 +495,7 @@ class ISXM_Sync {
             $token    = $page['next_token'];
         } while ( $token !== '' );
 
+        self::mark_run();
         return self::classify( $e, $found, $primary_found, $orphan, $orphan_sample, $outside, $scanned );
     }
 
@@ -625,6 +633,40 @@ class ISXM_Sync {
         } while ( $token !== '' );
 
         return $deleted;
+    }
+
+    /* ---------------------------------------------------------------------
+     * Last-run tracking — lets the status widget nudge the user back to
+     * Sync when a scan hasn't run in a while (files can go missing from
+     * the bucket out-of-band, and nothing else notices).
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Record that a scan just finished cleanly (no errors). Called from
+     * the finish phase of the AJAX scan and the WP-CLI full scan — never
+     * from apply, since a scan that reports "all complete" still counts
+     * as having checked.
+     */
+    public static function mark_run() {
+        update_option( self::LAST_RUN_OPTION, time(), false );
+    }
+
+    /**
+     * @return int|null Unix timestamp of the last clean scan, or null if
+     *                   Sync has never completed one.
+     */
+    public static function last_run() {
+        $value = get_option( self::LAST_RUN_OPTION );
+        return is_numeric( $value ) ? (int) $value : null;
+    }
+
+    /**
+     * @return bool Whether it's been long enough since the last clean scan
+     *              (or there has never been one) to nudge the user.
+     */
+    public static function is_stale() {
+        $last = self::last_run();
+        return $last === null || ( time() - $last ) > self::STALE_AFTER;
     }
 
     /* ---------------------------------------------------------------------

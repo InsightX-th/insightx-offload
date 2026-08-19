@@ -786,6 +786,11 @@ class ISXM_Background {
             'jobs'      => (object) $jobs,
             'stats'     => ISXM_Tools::get_stats(),
             'loopback'  => self::loopback_available(),
+            // Lets the Sync card's own status line say when it last ran
+            // (and whether that's stale) — files deleted from the bucket
+            // out-of-band never surface any other way.
+            'sync_last_run' => ISXM_Sync::last_run(),
+            'sync_stale'    => ISXM_Sync::is_stale(),
             // Every response re-mints the nonce: a run can outlive the 24h
             // nonce lifetime, and so can an admin page left open overnight.
             'nonce'     => wp_create_nonce( ISXM_Tools::NONCE_ACTION ),

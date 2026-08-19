@@ -528,6 +528,7 @@ class ISXM_Tools {
         ] );
         ISXM_Sync::delete_state( $run_id );
         ISXM_Sync::cleanup_run_files( $run_id );
+        ISXM_Sync::mark_run();
 
         return [ 'processed' => $processed, 'errors' => $errors ];
     }

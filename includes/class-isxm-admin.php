@@ -319,6 +319,7 @@ class ISXM_Admin {
 
                         <div class="isxs-tools-grid">
                             <?php
+                            $this->sync_card();
                             $this->tool_card(
                                 'offload',
                                 'Offload media ที่เหลือ',
@@ -695,6 +696,8 @@ class ISXM_Admin {
                 return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14 13l-3-3 3.7-3.7Z"/></svg>';
             case 'migrate':
                 return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h4v4"/><path d="m20 3-8 8"/><path d="M8 21H4v-4"/><path d="m4 21 8-8"/></svg>';
+            case 'sync':
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
         }
         return '';
     }
@@ -734,6 +737,56 @@ class ISXM_Admin {
                 </div>
                 <p class="isxs-tool-eta"></p>
                 <ul class="isxs-tool-errors" hidden></ul>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the Sync/Verify card — reconciles `_isxs_offload` tracking
+     * meta against what's actually in the bucket (see ISXM_Sync). This is
+     * NOT a tool_card(): it's driven entirely by its own client-side batch
+     * loop in admin.js (isxs_sync_scan / isxs_sync_apply /
+     * isxs_sync_orphan_cleanup), not the generic server-side job engine —
+     * so its run button deliberately does NOT use the `isxs-tool-run`
+     * class or an `isxs-tool` wrapper, which would otherwise get picked up
+     * by the generic job-engine click handlers (`.isxs-tool .isxs-tool-run`)
+     * bound elsewhere in admin.js.
+     */
+    private function sync_card() {
+        $last_run = ISXM_Sync::last_run();
+        ?>
+        <div class="isxs-card isxs-sync-card">
+            <div class="isxs-tool-top">
+                <span class="isxs-tool-icon"><?php echo $this->tool_icon_svg( 'sync' ); ?></span>
+                <h2>ซิงก์ให้ตรงกับ bucket</h2>
+                <div class="isxs-tool-actions">
+                    <span class="isxs-conn-badge isxs-sync-status" data-state="<?php echo $last_run === null ? 'unknown' : 'ok'; ?>">
+                        <span class="isxs-conn-dot"></span>
+                        <span class="isxs-sync-status-text"><?php echo $last_run === null ? 'ยังไม่เคยตรวจสอบกับ bucket จริง' : 'ตรวจล่าสุดเมื่อ ' . esc_html( human_time_diff( $last_run, time() ) ) . 'ที่แล้ว'; ?></span>
+                    </span>
+                    <button type="button" class="isxs-btn isxs-btn-primary isxs-sync-run">ซิงก์ให้ตรงกับ bucket</button>
+                </div>
+            </div>
+            <div class="isxs-tool-body">
+                <p>ตรวจ bucket จริงเทียบกับข้อมูลที่ปลั๊กอินติดตามไว้ — เจอไฟล์ที่ถูกลบออกจาก bucket นอกปลั๊กอิน (console, CLI, สคริปต์ลบไฟล์) จะล้าง meta ค้างให้ Offload/ย้ายข้อมูลอัปโหลดใหม่ให้เอง</p>
+                <p class="isxs-sync-inline-ok" hidden>ตรงกันทั้งหมดแล้ว</p>
+                <div class="isxs-tool-progress" hidden>
+                    <div class="isxs-progress-track"><div class="isxs-progress-fill"></div></div>
+                    <span class="isxs-tool-percent"></span>
+                    <span class="isxs-tool-count">0 รายการ</span>
+                </div>
+                <p class="isxs-tool-eta"></p>
+                <ul class="isxs-tool-errors" hidden></ul>
+                <div class="isxs-sync-result" hidden>
+                    <div class="isxs-sync-summary"></div>
+                    <div class="isxs-sync-sample"></div>
+                    <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-apply" hidden>ล้าง meta ค้าง</button>
+                    <div class="isxs-sync-orphan-actions" hidden>
+                        <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-orphan-run">ลบ orphan objects</button>
+                        <p class="isxs-hint">object ใน prefix ปัจจุบันที่ไม่มี media ใน WordPress ตรงกัน</p>
+                    </div>
+                </div>
             </div>
         </div>
         <?php

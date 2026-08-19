@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -55,6 +55,10 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.0 =
+* Sync card แสดง badge สถานะการตรวจสอบล่าสุด (ตรวจล่าสุดวันนี้ / X วันที่แล้ว) หน้าปุ่ม แทนข้อความใต้คำอธิบาย
+* ติดตามเวลาที่ตรวจ Sync ครั้งล่าสุด พร้อมแจ้งเตือนเมื่อไม่ได้ตรวจนานเกิน 7 วัน (stale)
 
 = 0.1.0 =
 * UI ใหม่แบบ Offload Media: header + Offload Status dropdown + แท็บ

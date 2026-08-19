@@ -758,6 +758,32 @@
    * Fold one server response into the UI. Every job endpoint answers with
    * the same payload, so start/pause/cancel/poll all land here.
    */
+  // Sync card's "last checked" line — updated from every job-status poll
+  // (not just its own refresh button) so it stays current without extra
+  // requests. Queried by selector rather than cached because the sync card
+  // may not exist in the DOM yet when this file first runs.
+  const updateSyncStatusLine = (lastRun, stale) => {
+    const $text = $(".isxs-sync-status-text");
+    if (!$text.length) {
+      return;
+    }
+    let text;
+    if (!lastRun) {
+      text = "ยังไม่เคยตรวจสอบกับ bucket จริง";
+    } else {
+      const days = Math.floor((Date.now() / 1000 - lastRun) / 86400);
+      text =
+        days <= 0
+          ? "ตรวจล่าสุดวันนี้"
+          : "ตรวจล่าสุดเมื่อ " + days + " วันที่แล้ว";
+      if (stale) {
+        text += " — นานแล้ว ควรตรวจอีกครั้ง";
+      }
+    }
+    $text.text(text);
+    $(".isxs-sync-status").toggleClass("is-stale", !!stale);
+  };
+
   const applyJobPayload = (res) => {
     if (!res || !res.success || !res.data) {
       return false;
@@ -772,6 +798,9 @@
     }
     if (typeof data.loopback !== "undefined") {
       loopbackOk = !!data.loopback;
+    }
+    if (typeof data.sync_last_run !== "undefined") {
+      updateSyncStatusLine(data.sync_last_run, data.sync_stale);
     }
     // Jobs first: applyStats() below decides whether the retry card is
     // visible, and that decision reads the running state from here.
@@ -1191,6 +1220,9 @@
       if (ok) {
         $syncFill.css("width", "100%");
         renderSyncResult(result || {});
+        // The server just marked this scan as the new last-run — reflect
+        // it immediately instead of waiting for the next poll tick.
+        updateSyncStatusLine(Math.floor(Date.now() / 1000), false);
       } else {
         $syncFill.css("width", "5%");
         if (message) {
