@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,12 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.2 =
+* แจ้งเตือนอัปเดตในหน้า Plugins ของ WordPress เองแล้ว โดยอ่านจาก GitHub Releases —
+  เดิมต้องดาวน์โหลด zip มาอัปโหลดเองทุกครั้ง เพราะปลั๊กอินไม่ได้อยู่บน wordpress.org
+  และไม่มีอะไรบอก WordPress ว่ามีเวอร์ชันใหม่
+  หมายเหตุ: เวอร์ชันนี้ยังต้องติดตั้งด้วยมือครั้งสุดท้าย ตัวตรวจอัปเดตถึงจะเริ่มทำงาน
 
 = 0.2.1 =
 * แก้ปัญหา "ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์" ทั้งที่ไฟล์ยังอยู่ในโฟลเดอร์ uploads — เว็บที่ย้ายมาจาก

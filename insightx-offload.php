@@ -25,7 +25,28 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'ISXM_PLUGIN_DIR', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'ISXM_PLUGIN_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
-define( 'ISXM_PLUGIN_VERSION', '0.2.1' );
+define( 'ISXM_PLUGIN_VERSION', '0.2.2' );
+
+/*
+ * GitHub update checker.
+ *
+ * The plugin is not on wordpress.org, so nothing would otherwise tell
+ * WordPress that a newer version exists — releases were built and tagged,
+ * and every site kept sitting on whatever was installed by hand.
+ *
+ * enableReleaseAssets() points the checker at the zip attached to each
+ * GitHub Release (built by .github/workflows/release.yml from the tag),
+ * not at a tarball of the branch, so what a site installs is exactly what
+ * was released. The repository is public; no authentication is involved.
+ */
+require_once ISXM_PLUGIN_DIR . 'libs/plugin-update-checker/plugin-update-checker.php';
+
+$isxm_update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    'https://github.com/InsightX-th/insightx-offload',
+    __FILE__,
+    'insightx-offload'
+);
+$isxm_update_checker->getVcsApi()->enableReleaseAssets();
 
 $isxm_files_to_load = [
     'includes/class-isxm-crypto.php',
