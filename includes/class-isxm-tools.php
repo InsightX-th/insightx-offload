@@ -1177,6 +1177,12 @@ class ISXM_Tools {
         $job      = ISXM_Job::get( $tool );
         $instance->set_progress_job( $job );
 
+        // Retry backoff inside the client must not outlive this batch — see
+        // ISXM_Client::set_deadline(). The loops below each start their own
+        // clock a moment from now, so this is a hair conservative, which is
+        // the right direction: it only ever ends a wait sooner.
+        ISXM_Client::set_deadline( microtime( true ) + self::time_budget() );
+
         try {
             switch ( $tool ) {
                 case 'offload':
@@ -1197,6 +1203,7 @@ class ISXM_Tools {
             return new WP_Error( 'isxs_unknown_tool', 'ไม่รู้จักเครื่องมือนี้' );
         } finally {
             $instance->set_progress_job( null );
+            ISXM_Client::set_deadline( 0 );
         }
     }
 

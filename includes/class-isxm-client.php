@@ -21,6 +21,34 @@ class ISXM_Client {
     private $secret_key;
     private $path_style;
 
+    /**
+     * Shared cURL handle for streamed uploads.
+     *
+     * Uploads used to curl_init()/curl_close() per file, so every object
+     * paid a fresh TCP and TLS handshake. One attachment is the original
+     * plus its generated sizes — commonly eight objects — so a bulk run
+     * spent most of its time handshaking rather than transferring, and the
+     * cost scaled with how far away the endpoint is.
+     *
+     * curl_easy_reset() clears the options but explicitly keeps the handle's
+     * live connections, DNS cache and TLS session cache, so reusing one
+     * handle lets every file after the first ride the connection the
+     * previous one opened. Static (not per-instance) because callers create
+     * a client per attachment; the handle has to outlive them to be worth
+     * anything.
+     *
+     * @var resource|\CurlHandle|null
+     */
+    private static $curl_handle = null;
+
+    /**
+     * Wall-clock time after which retry backoff is abandoned, or 0.0 for no
+     * limit. See set_deadline().
+     *
+     * @var float
+     */
+    private static $deadline = 0.0;
+
     public function __construct( array $args = [] ) {
         $s = wp_parse_args( $args, ISXM_Settings::all() );
 
@@ -42,6 +70,38 @@ class ISXM_Client {
             $this->endpoint = 's3.' . $this->region . '.amazonaws.com';
             $this->path_style = false;
         }
+    }
+
+    /**
+     * Bound how long retry backoff may keep the caller waiting.
+     *
+     * A retryable failure sleeps 1s then 3s between attempts. Inside a
+     * time-budgeted batch that is 4 seconds of a 15-second budget spent
+     * asleep on ONE file, so an endpoint returning 503s could burn a whole
+     * batch on three or four items while still paying the full cost of
+     * dispatching the next runner. Past the deadline the remaining attempts
+     * are abandoned and the error is returned: the batch ends, the cursor is
+     * saved, and the next batch retries the same item with a full budget.
+     *
+     * Set by ISXM_Tools::execute_batch() around a batch and cleared after.
+     *
+     * @param float $deadline microtime(true) value, or 0.0 for no limit.
+     */
+    public static function set_deadline( $deadline ) {
+        self::$deadline = (float) $deadline;
+    }
+
+    /**
+     * Whether sleeping this long would run past the batch deadline.
+     *
+     * @param int $seconds Backoff about to be slept.
+     * @return bool
+     */
+    private static function may_wait( $seconds ) {
+        if ( self::$deadline <= 0 ) {
+            return true;
+        }
+        return ( microtime( true ) + $seconds ) < self::$deadline;
     }
 
     /**
@@ -133,7 +193,11 @@ class ISXM_Client {
                 return $result;
             }
             if ( $i < $attempts - 1 ) {
-                sleep( isset( $delays[ $i ] ) ? $delays[ $i ] : end( $delays ) );
+                $delay = isset( $delays[ $i ] ) ? $delays[ $i ] : end( $delays );
+                if ( ! self::may_wait( $delay ) ) {
+                    break;
+                }
+                sleep( $delay );
             }
         }
 
@@ -480,9 +544,7 @@ class ISXM_Client {
 
         $amz_date   = gmdate( 'Ymd\THis\Z' );
         $date_stamp = gmdate( 'Ymd' );
-        // hash_file() streams the file in chunks, so signing a 2 GB upload
-        // costs the same memory as signing an empty one.
-        $payload_hash = $body_file !== '' ? hash_file( 'sha256', $body_file ) : hash( 'sha256', $body );
+        $payload_hash = $this->payload_hash( $body_file, $body );
         if ( $payload_hash === false ) {
             return new WP_Error( 'isxs_read_failed', sprintf( 'Cannot read local file: %s', wp_basename( $body_file ) ) );
         }
@@ -619,7 +681,11 @@ class ISXM_Client {
         // self-signed Minio behind https) keeps working after the switch.
         $ssl_verify = apply_filters( 'https_ssl_verify', true, $url );
 
-        $ch = curl_init();
+        $ch = self::curl_handle();
+        if ( ! $ch ) {
+            fclose( $handle );
+            return new WP_Error( 'isxs_curl_init_failed', 'เริ่มการเชื่อมต่อ cURL ไม่สำเร็จ' );
+        }
         $curl_options = [
             CURLOPT_URL            => $url,
             CURLOPT_UPLOAD         => true,
@@ -647,7 +713,9 @@ class ISXM_Client {
         $errno         = curl_errno( $ch );
         $error         = curl_error( $ch );
         $code          = (int) curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
-        curl_close( $ch );
+        // Deliberately NOT closed: the handle is reused by the next upload so
+        // the connection it just opened stays alive. curl_handle() resets it
+        // before it is configured again.
         fclose( $handle );
 
         if ( $errno ) {
@@ -683,7 +751,11 @@ class ISXM_Client {
                 return $response;
             }
             if ( $i < $attempts - 1 ) {
-                sleep( isset( $delays[ $i ] ) ? $delays[ $i ] : end( $delays ) );
+                $delay = isset( $delays[ $i ] ) ? $delays[ $i ] : end( $delays );
+                if ( ! self::may_wait( $delay ) ) {
+                    break;
+                }
+                sleep( $delay );
             }
         }
 
@@ -704,6 +776,66 @@ class ISXM_Client {
         }
         $status = (int) wp_remote_retrieve_response_code( $response );
         return in_array( $status, [ 429, 500, 502, 503, 504 ], true );
+    }
+
+    /**
+     * The `x-amz-content-sha256` value to sign this request with.
+     *
+     * SigV4 lets a request over TLS declare UNSIGNED-PAYLOAD instead of the
+     * body's real digest — the transport already protects the body, so the
+     * signature only has to cover the headers. Taking that route on uploads
+     * skips a full extra read of every file: hashing streams the file off
+     * disk before cURL then reads it again to send it, which on a large
+     * video is a second pass over hundreds of megabytes purely to compute a
+     * number the endpoint does not need. Every S3-compatible endpoint this
+     * plugin targets (S3, Minio, R2, Spaces) accepts it, and the AWS SDK
+     * signs S3 uploads this way by default.
+     *
+     * Only for streamed uploads over https: a plaintext endpoint has no
+     * transport integrity to lean on, and hashing an in-memory body (the
+     * small XML of a delete/list request) costs nothing worth avoiding.
+     * Filter `isxs_sign_upload_payload` to true to force real hashing on an
+     * endpoint that rejects UNSIGNED-PAYLOAD.
+     *
+     * @param string $body_file Absolute path of a streamed request body, or ''.
+     * @param string $body      In-memory request body.
+     * @return string|false Hex digest or UNSIGNED-PAYLOAD; false if the file is unreadable.
+     */
+    private function payload_hash( $body_file, $body ) {
+        if ( $body_file === '' ) {
+            return hash( 'sha256', $body );
+        }
+
+        if ( $this->scheme === 'https' && ! apply_filters( 'isxs_sign_upload_payload', false, $this->endpoint ) ) {
+            return 'UNSIGNED-PAYLOAD';
+        }
+
+        // hash_file() streams the file in chunks, so signing a 2 GB upload
+        // costs the same memory as signing an empty one.
+        return hash_file( 'sha256', $body_file );
+    }
+
+    /**
+     * A cURL handle ready to configure, reusing the previous one so its
+     * live connection is kept. See $curl_handle.
+     *
+     * @return resource|\CurlHandle|false
+     */
+    private static function curl_handle() {
+        if ( self::$curl_handle === null ) {
+            $handle = curl_init();
+            if ( ! $handle ) {
+                return false;
+            }
+            self::$curl_handle = $handle;
+        } else {
+            // Clears every option set by the previous upload — including the
+            // file handle it read from, which is closed by now — while
+            // leaving the connection and TLS session caches intact.
+            curl_reset( self::$curl_handle );
+        }
+
+        return self::$curl_handle;
     }
 
     /**
