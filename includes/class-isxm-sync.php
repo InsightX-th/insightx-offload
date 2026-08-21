@@ -62,6 +62,9 @@ class ISXM_Sync {
      *  without error — used to nudge the user back to Sync when it has
      *  gone stale (see last_run() / is_stale()). */
     const LAST_RUN_OPTION = 'isxs_sync_last_run';
+    /** Option holding the verdict of that last scan (1 = everything
+     *  matched, 0 = differences found) — see last_clean(). */
+    const LAST_CLEAN_OPTION = 'isxs_sync_last_clean';
     /** How long since the last clean scan before the status widget nudges
      *  the user to run Sync again. */
     const STALE_AFTER = 7 * DAY_IN_SECONDS;
@@ -495,8 +498,9 @@ class ISXM_Sync {
             $token    = $page['next_token'];
         } while ( $token !== '' );
 
-        self::mark_run();
-        return self::classify( $e, $found, $primary_found, $orphan, $orphan_sample, $outside, $scanned );
+        $result = self::classify( $e, $found, $primary_found, $orphan, $orphan_sample, $outside, $scanned );
+        self::mark_run( self::result_is_clean( $result ) );
+        return $result;
     }
 
     /**
@@ -575,8 +579,7 @@ class ISXM_Sync {
                 continue;
             }
 
-            $file = get_attached_file( $id, true );
-            if ( $file === false || ! file_exists( $file ) ) {
+            if ( ! ISXM_Offload::local_file_exists( $id ) ) {
                 update_post_meta( $id, ISXM_Offload::DATA_LOSS_META_KEY, time() );
                 $data_loss++;
             } else {
@@ -646,9 +649,16 @@ class ISXM_Sync {
      * the finish phase of the AJAX scan and the WP-CLI full scan — never
      * from apply, since a scan that reports "all complete" still counts
      * as having checked.
+     *
+     * @param bool|null $clean Whether that scan found nothing out of sync.
+     *                         null (the default) leaves the previous verdict
+     *                         alone, for callers that don't have one.
      */
-    public static function mark_run() {
+    public static function mark_run( $clean = null ) {
         update_option( self::LAST_RUN_OPTION, time(), false );
+        if ( $clean !== null ) {
+            update_option( self::LAST_CLEAN_OPTION, $clean ? 1 : 0, false );
+        }
     }
 
     /**
@@ -658,6 +668,35 @@ class ISXM_Sync {
     public static function last_run() {
         $value = get_option( self::LAST_RUN_OPTION );
         return is_numeric( $value ) ? (int) $value : null;
+    }
+
+    /**
+     * Verdict of the last finished scan — what the status badge shows
+     * (green "everything matches" vs red "found differences") on a fresh
+     * page load, when the JS has no scan result of its own yet.
+     *
+     * @return bool|null true = everything matched, false = differences
+     *                   found, null = never scanned (or a scan from a
+     *                   version that didn't record a verdict).
+     */
+    public static function last_clean() {
+        $value = get_option( self::LAST_CLEAN_OPTION, null );
+        return $value === null || $value === false ? null : (bool) (int) $value;
+    }
+
+    /**
+     * Whether a scan result counts as "everything matches" — the same
+     * condition the JS uses to paint the badge green, kept here so the
+     * server-rendered badge and the live one can never disagree.
+     *
+     * @param array $result A scan result (classify() output).
+     * @return bool
+     */
+    public static function result_is_clean( array $result ) {
+        return empty( $result['stale_ids'] )
+            && empty( $result['partial_ids'] )
+            && empty( $result['orphan'] )
+            && empty( $result['outside_prefix'] );
     }
 
     /**

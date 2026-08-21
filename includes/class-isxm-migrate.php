@@ -64,8 +64,11 @@ class ISXM_Migrate {
         $base_key = $s['source_prefix'] !== '' ? trailingslashit( ltrim( $s['source_prefix'], '/' ) ) : '';
 
         if ( $s['source_use_year_month'] ) {
-            $relative = get_post_meta( $attachment_id, '_wp_attached_file', true );
-            $subdir   = dirname( $relative );
+            // Normalised, for the same reason ISXM_Offload does it: a stale
+            // absolute path in the meta would otherwise become part of the
+            // source object key.
+            $relative = (string) ISXM_Offload::relative_local_path( $attachment_id );
+            $subdir   = $relative === '' ? '' : dirname( $relative );
             if ( $subdir !== '.' && $subdir !== '' ) {
                 $base_key .= trailingslashit( $subdir );
             }
@@ -241,8 +244,11 @@ class ISXM_Migrate {
             return new WP_Error( 'isxs_no_source_keys', 'ไม่พบไฟล์ของรายการนี้บน source bucket' );
         }
 
-        $file = get_attached_file( $attachment_id, true );
-        if ( ! $file ) {
+        // Normalised against the current uploads dir: the staging files are
+        // written here, and a stale absolute path from another host would
+        // put them outside the uploads tree entirely.
+        $file = ISXM_Offload::local_path( $attachment_id );
+        if ( $file === '' ) {
             return new WP_Error( 'isxs_no_path', 'ไม่ทราบตำแหน่งไฟล์ของ attachment นี้' );
         }
 

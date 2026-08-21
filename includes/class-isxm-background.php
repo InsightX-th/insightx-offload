@@ -34,6 +34,14 @@ class ISXM_Background {
     /** Shared secret proving a loopback request came from this site. */
     const TOKEN_OPTION = 'isxs_bg_token';
 
+    /**
+     * Home URL recorded when the dispatch token was generated. The token
+     * rotates when this no longer matches home_url() — a domain move or an
+     * http→https flip means a token captured or leaked at the old URL must
+     * not keep authorising at the new one.
+     */
+    const TOKEN_MARKER = 'isxs_bg_token_site';
+
     /** Only one runner may hold this at a time. */
     const RUNNER_LOCK = 'isxs_bg_lock';
 
@@ -791,6 +799,9 @@ class ISXM_Background {
             // out-of-band never surface any other way.
             'sync_last_run' => ISXM_Sync::last_run(),
             'sync_stale'    => ISXM_Sync::is_stale(),
+            // ...and whether that run found everything in sync, so the badge
+            // keeps its green/red verdict across page loads and polls.
+            'sync_clean'    => ISXM_Sync::last_clean(),
             // Every response re-mints the nonce: a run can outlive the 24h
             // nonce lifetime, and so can an admin page left open overnight.
             'nonce'     => wp_create_nonce( ISXM_Tools::NONCE_ACTION ),
@@ -812,13 +823,24 @@ class ISXM_Background {
      * has to keep working for a run that outlives any nonce lifetime, and
      * it only ever authorises "continue the job this site already started".
      *
+     * Rotates when the site URL changes (TOKEN_MARKER no longer matches
+     * home_url()): a token leaked from the old URL must not survive the
+     * move. In-flight runners holding the old token simply 403 out of their
+     * next hop, and the healthcheck or the UI tick re-dispatches with the
+     * fresh token — self-healing, no manual reset needed. Upgrades from
+     * installs without the marker rotate exactly once for the same reason.
+     *
      * @return string
      */
     private static function token() {
-        $token = get_option( self::TOKEN_OPTION );
-        if ( ! is_string( $token ) || strlen( $token ) < 32 ) {
+        $token  = get_option( self::TOKEN_OPTION );
+        $marker = get_option( self::TOKEN_MARKER, '' );
+        $site   = home_url();
+
+        if ( ! is_string( $token ) || strlen( $token ) < 32 || $marker !== $site ) {
             $token = wp_generate_password( 48, false, false );
             update_option( self::TOKEN_OPTION, $token, false );
+            update_option( self::TOKEN_MARKER, $site, false );
         }
         return $token;
     }

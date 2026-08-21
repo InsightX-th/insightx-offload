@@ -762,26 +762,50 @@
   // (not just its own refresh button) so it stays current without extra
   // requests. Queried by selector rather than cached because the sync card
   // may not exist in the DOM yet when this file first runs.
-  const updateSyncStatusLine = (lastRun, stale) => {
+  // `clean` is the verdict of that last scan — true (everything matched),
+  // false (differences found), or null/undefined when there is none to go
+  // on. It drives both the label and the badge colour, so the badge itself
+  // reports the outcome instead of only saying when it last looked. The
+  // `data-state` attribute is what admin.css keys the green/red styling
+  // off, and it must be written here too — leaving it at whatever PHP
+  // rendered on page load froze the badge grey after the first scan.
+  const updateSyncStatusLine = (lastRun, stale, clean) => {
+    const $badge = $(".isxs-sync-status");
     const $text = $(".isxs-sync-status-text");
     if (!$text.length) {
       return;
     }
+    const when =
+      Math.floor((Date.now() / 1000 - lastRun) / 86400) <= 0
+        ? "ตรวจล่าสุดวันนี้"
+        : "ตรวจล่าสุดเมื่อ " +
+          Math.floor((Date.now() / 1000 - lastRun) / 86400) +
+          " วันที่แล้ว";
+
     let text;
+    let state;
     if (!lastRun) {
       text = "ยังไม่เคยตรวจสอบกับ bucket จริง";
+      state = "unknown";
+    } else if (clean === true) {
+      text = "ตรงกันทั้งหมดแล้ว";
+      state = "ok";
+    } else if (clean === false) {
+      text = "พบรายการไม่ตรงกัน";
+      state = "error";
     } else {
-      const days = Math.floor((Date.now() / 1000 - lastRun) / 86400);
-      text =
-        days <= 0
-          ? "ตรวจล่าสุดวันนี้"
-          : "ตรวจล่าสุดเมื่อ " + days + " วันที่แล้ว";
-      if (stale) {
-        text += " — นานแล้ว ควรตรวจอีกครั้ง";
-      }
+      text = when;
+      state = "ok";
     }
+    if (lastRun && stale) {
+      text += " — นานแล้ว ควรตรวจอีกครั้ง";
+    }
+
     $text.text(text);
-    $(".isxs-sync-status").toggleClass("is-stale", !!stale);
+    // The timestamp still has to be reachable once the verdict takes over
+    // the label.
+    $badge.attr("data-state", state).attr("title", lastRun ? when : "");
+    $badge.toggleClass("is-stale", !!stale);
   };
 
   const applyJobPayload = (res) => {
@@ -800,7 +824,11 @@
       loopbackOk = !!data.loopback;
     }
     if (typeof data.sync_last_run !== "undefined") {
-      updateSyncStatusLine(data.sync_last_run, data.sync_stale);
+      updateSyncStatusLine(
+        data.sync_last_run,
+        data.sync_stale,
+        data.sync_clean,
+      );
     }
     // Jobs first: applyStats() below decides whether the retry card is
     // visible, and that decision reads the running state from here.
@@ -1111,7 +1139,6 @@
     const $syncResult = $syncCard.find(".isxs-sync-result");
     const $syncSummary = $syncCard.find(".isxs-sync-summary");
     const $syncSample = $syncCard.find(".isxs-sync-sample");
-    const $syncInlineOk = $syncCard.find(".isxs-sync-inline-ok");
 
     // Lowercase alphanumeric so it survives the server's sanitize_key().
     // The scan state lives server-side keyed by this, and the apply step
@@ -1124,6 +1151,9 @@
     const $syncOrphanRun = $syncCard.find(".isxs-sync-orphan-run");
     const $syncOrphanActions = $syncCard.find(".isxs-sync-orphan-actions");
 
+    // Returns whether the scan came back clean, so the caller can paint the
+    // status badge to match (green vs red) — the badge IS the "everything
+    // matches" message now, there is no separate line under the card.
     const renderSyncResult = (r) => {
       const stale = (r.stale_ids || []).length;
       const partial = (r.partial_ids || []).length;
@@ -1133,17 +1163,14 @@
       $syncSummary.empty();
       $syncSample.empty();
 
-      // Everything matches — one green line right next to the stats, no
-      // result box below.
+      // Everything matches — nothing to show below the card at all.
       if (stale === 0 && partial === 0 && orphan === 0 && outside === 0) {
-        $syncInlineOk.removeAttr("hidden");
         $syncResult.attr("hidden", true);
         $syncApply.attr("hidden", true);
         $syncOrphanRun.attr("hidden", true);
         $syncOrphanActions.attr("hidden", true);
-        return;
+        return true;
       }
-      $syncInlineOk.attr("hidden", true);
 
       // One short line per finding — the card lives on the Overview, so
       // the result has to stay compact; the buttons carry the next step.
@@ -1211,6 +1238,8 @@
         $syncOrphanRun.attr("hidden", true);
         $syncOrphanActions.attr("hidden", true);
       }
+
+      return false;
     };
 
     const syncFinish = (ok, result, message) => {
@@ -1218,13 +1247,26 @@
       $syncRun.prop("disabled", false).text("ซิงก์ให้ตรงกับ bucket");
       $syncEta.text("");
       if (ok) {
+        // The bar has done its job; leaving it on screen at 100% next to a
+        // "0 รายการ" counter just looked like the run was still going.
+        $syncProgress.attr("hidden", true);
         $syncFill.css("width", "100%");
-        renderSyncResult(result || {});
+        $syncCount.text("0 รายการ");
+        const clean = renderSyncResult(result || {});
         // The server just marked this scan as the new last-run — reflect
-        // it immediately instead of waiting for the next poll tick.
-        updateSyncStatusLine(Math.floor(Date.now() / 1000), false);
+        // it (and its verdict) immediately instead of waiting for the next
+        // poll tick.
+        updateSyncStatusLine(Math.floor(Date.now() / 1000), false, clean);
       } else {
+        $syncProgress.attr("hidden", true);
         $syncFill.css("width", "5%");
+        // A scan that couldn't finish proves nothing about the bucket, but
+        // it must not keep claiming the previous verdict either.
+        $syncCard
+          .find(".isxs-sync-status")
+          .attr("data-state", "error")
+          .find(".isxs-sync-status-text")
+          .text("ซิงก์ไม่สำเร็จ");
         if (message) {
           $syncErrors.removeAttr("hidden").append($("<li>").text(message));
         }
@@ -1242,8 +1284,14 @@
       $syncRun.prop("disabled", true).text("กำลังซิงก์…");
       $syncApply.attr("hidden", true);
       $syncResult.attr("hidden", true);
-      $syncInlineOk.attr("hidden", true);
       $syncErrors.attr("hidden", true).empty();
+      // Neither the old verdict nor "ซิงก์ไม่สำเร็จ" from a previous
+      // attempt should stand while this run is still deciding.
+      $syncCard
+        .find(".isxs-sync-status")
+        .attr("data-state", "unknown")
+        .find(".isxs-sync-status-text")
+        .text("กำลังตรวจกับ bucket…");
       $syncEta.text("กำลังซิงก์กับ bucket จริง…");
       $syncProgress.removeAttr("hidden");
       $syncFill.css("width", "5%");

@@ -514,7 +514,7 @@ class ISXM_Admin {
                     <div class="isxs-field isxs-col-span">
                         <label>Secret Key</label>
                         <input type="password" class="isxs-conn-secret-key" autocomplete="new-password" data-has-secret="<?php echo $has_secret ? '1' : '0'; ?>" value="<?php echo $has_secret ? esc_attr( str_repeat( '•', 16 ) ) : ''; ?>" placeholder="<?php echo esc_attr( $meta['secret_key_placeholder'] ); ?>">
-                        <p class="isxs-hint">🔐 เข้ารหัส AES-256-CBC ก่อนบันทึกลงฐานข้อมูล — ค่าที่โชว์เป็นจุดคือตัวยึดตำแหน่ง ไม่ใช่ Secret Key จริง คัดลอกไปใช้ไม่ได้</p>
+                        <p class="isxs-hint">🔐 เข้ารหัส AES-256-GCM (มี Auth tag ป้องกันการแก้ค่า) ก่อนบันทึกลงฐานข้อมูล — ค่าที่โชว์เป็นจุดคือตัวยึดตำแหน่ง ไม่ใช่ Secret Key จริง คัดลอกไปใช้ไม่ได้</p>
                     </div>
                 </div>
                 <div class="isxs-toggle-row">
@@ -723,7 +723,7 @@ class ISXM_Admin {
                 <h2><?php echo esc_html( $title ); ?></h2>
                 <div class="isxs-tool-actions">
                     <button type="button" class="isxs-btn isxs-btn-ghost isxs-tool-stop" hidden>หยุด</button>
-                    <button type="button" class="isxs-btn isxs-btn-ghost isxs-tool-cancel" hidden>ยกเลิก</button>
+                    <button type="button" class="isxs-btn isxs-btn-danger isxs-tool-cancel" hidden>ยกเลิก</button>
                     <button type="button" class="isxs-btn <?php echo $variant === 'danger' ? 'isxs-btn-danger' : 'isxs-btn-primary'; ?> isxs-tool-run"><?php echo esc_html( $button ); ?></button>
                 </div>
             </div>
@@ -755,22 +755,45 @@ class ISXM_Admin {
      */
     private function sync_card() {
         $last_run = ISXM_Sync::last_run();
+        // The badge carries the verdict, not just "when" — green when the
+        // last scan found everything in sync, red when it found
+        // differences. `last_clean()` is null for a scan from a version
+        // before the verdict was recorded, which falls back to the old
+        // "checked N ago" wording rather than claiming either outcome.
+        $last_clean = ISXM_Sync::last_clean();
+        if ( $last_run === null ) {
+            $badge_state = 'unknown';
+            $badge_text  = 'ยังไม่เคยตรวจสอบกับ bucket จริง';
+        } elseif ( $last_clean === true ) {
+            $badge_state = 'ok';
+            $badge_text  = 'ตรงกันทั้งหมดแล้ว';
+        } elseif ( $last_clean === false ) {
+            $badge_state = 'error';
+            $badge_text  = 'พบรายการไม่ตรงกัน';
+        } else {
+            $badge_state = 'ok';
+            $badge_text  = 'ตรวจล่าสุดเมื่อ ' . human_time_diff( $last_run, time() ) . 'ที่แล้ว';
+        }
+        // When the verdict replaces the timestamp in the label, the
+        // timestamp still has to be reachable — hence the tooltip.
+        $badge_title = $last_run === null
+            ? ''
+            : 'ตรวจล่าสุดเมื่อ ' . human_time_diff( $last_run, time() ) . 'ที่แล้ว';
         ?>
         <div class="isxs-card isxs-sync-card">
             <div class="isxs-tool-top">
                 <span class="isxs-tool-icon"><?php echo $this->tool_icon_svg( 'sync' ); ?></span>
                 <h2>ซิงก์ให้ตรงกับ bucket</h2>
                 <div class="isxs-tool-actions">
-                    <span class="isxs-conn-badge isxs-sync-status" data-state="<?php echo $last_run === null ? 'unknown' : 'ok'; ?>">
+                    <span class="isxs-conn-badge isxs-sync-status" data-state="<?php echo esc_attr( $badge_state ); ?>" title="<?php echo esc_attr( $badge_title ); ?>">
                         <span class="isxs-conn-dot"></span>
-                        <span class="isxs-sync-status-text"><?php echo $last_run === null ? 'ยังไม่เคยตรวจสอบกับ bucket จริง' : 'ตรวจล่าสุดเมื่อ ' . esc_html( human_time_diff( $last_run, time() ) ) . 'ที่แล้ว'; ?></span>
+                        <span class="isxs-sync-status-text"><?php echo esc_html( $badge_text ); ?></span>
                     </span>
                     <button type="button" class="isxs-btn isxs-btn-primary isxs-sync-run">ซิงก์ให้ตรงกับ bucket</button>
                 </div>
             </div>
             <div class="isxs-tool-body">
                 <p>ตรวจ bucket จริงเทียบกับข้อมูลที่ปลั๊กอินติดตามไว้ — เจอไฟล์ที่ถูกลบออกจาก bucket นอกปลั๊กอิน (console, CLI, สคริปต์ลบไฟล์) จะล้าง meta ค้างให้ Offload/ย้ายข้อมูลอัปโหลดใหม่ให้เอง</p>
-                <p class="isxs-sync-inline-ok" hidden>ตรงกันทั้งหมดแล้ว</p>
                 <div class="isxs-tool-progress" hidden>
                     <div class="isxs-progress-track"><div class="isxs-progress-fill"></div></div>
                     <span class="isxs-tool-percent"></span>

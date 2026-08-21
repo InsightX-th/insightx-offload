@@ -106,7 +106,7 @@ class ISXM_CLI_Connection {
      * [--access-key=<key>]
      *
      * [--secret-key=<key>]
-     * : Stored encrypted (AES-256-CBC), same as the admin UI.
+     * : Stored encrypted (AES-256-GCM, authenticated tag).
      *
      * [--path-style=<0|1>]
      *

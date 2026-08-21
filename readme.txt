@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,8 @@ Storage) และเสิร์ฟต่อผ่าน URL ใหม่ พ�
 * Sync เทียบ meta กับ bucket จริง (หา meta ค้าง / ไฟล์หาย / orphan)
 * หน้าสื่อ: คอลัมน์ Storage, ตัวกรองสถานะ, bulk action
 * **Full WP-CLI Integration**: `wp isxm status`, `wp isxm job list`, `wp isxm offload`, `wp isxm job run` รองรับการรันผ่าน Crontab
-* Secret Key เข้ารหัส AES-256-CBC เก็บในฐานข้อมูล
+* Secret Key เข้ารหัส AES-256-GCM (Authenticated Encryption) เก็บในฐานข้อมูล
+  — ค่าเดิม (AES-256-CBC) ยังอ่านได้อัตโนมัติ
 
 == Installation ==
 
@@ -55,6 +56,21 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.1 =
+* แก้ปัญหา "ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์" ทั้งที่ไฟล์ยังอยู่ในโฟลเดอร์ uploads — เว็บที่ย้ายมาจาก
+  เซิร์ฟเวอร์อื่นมักมี path เต็มของเครื่องเก่าค้างใน `_wp_attached_file` ตอนนี้ปลั๊กอินแปลง path
+  ให้อ้างอิงโฟลเดอร์ uploads ปัจจุบันเสมอ ทั้งตอน Offload, Download กลับ, Migrate และ Sync
+* แยกกรณี "meta ของไฟล์แนบเสียหาย" ออกจาก "ไฟล์หาย" เป็นคนละข้อความ เพราะวิธีแก้ต่างกัน
+* Sync: badge บอกผลการตรวจโดยตรง — เขียวเมื่อตรงกันทั้งหมด แดงเมื่อพบรายการไม่ตรงกันหรือซิงก์ไม่สำเร็จ
+  และจำผลไว้ข้ามการโหลดหน้า (เดิม badge ค้างเป็นสีเทาจนกว่าจะรีเฟรช)
+* Sync: ซ่อนแถบความคืบหน้าเมื่อตรวจเสร็จ แทนที่จะค้างเต็มแถบคู่กับ "0 รายการ"
+* ปุ่ม "ยกเลิก" ของทุกเครื่องมือเป็นสีแดง ให้ต่างจากปุ่ม "หยุด" ชัดเจน
+* Secret Key now encrypted with AES-256-GCM (format ENC3) — with Auth tag that detects value tampering
+  (previously AES-256-CBC had no tag) — old values (legacy format) will still be read automatically
+* Loopback runner token will automatically rotate when the site URL changes (domain change,
+  http → https) — the old token will no longer be usable, and jobs in progress will automatically
+  resume via Healthcheck
 
 = 0.2.0 =
 * Sync card แสดง badge สถานะการตรวจสอบล่าสุด (ตรวจล่าสุดวันนี้ / X วันที่แล้ว) หน้าปุ่ม แทนข้อความใต้คำอธิบาย

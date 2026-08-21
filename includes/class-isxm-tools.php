@@ -507,14 +507,16 @@ class ISXM_Tools {
         if ( ! empty( $stale_ids ) ) {
             ISXM_Tools::prime_caches( $stale_ids );
             foreach ( $stale_ids as $id ) {
-                $file = get_attached_file( (int) $id, true );
-                if ( $file === false || ! file_exists( $file ) ) {
+                // Resolved against the current uploads dir — a stale
+                // absolute path in the meta used to make perfectly present
+                // files look like data loss.
+                if ( ! ISXM_Offload::local_file_exists( (int) $id ) ) {
                     $data_loss_ids[] = (int) $id;
                 }
             }
         }
 
-        ISXM_Sync::save_result( $run_id, [
+        $result = [
             'stale_ids'      => $stale_ids,
             'partial_ids'    => $partial_ids,
             'data_loss_ids'  => $data_loss_ids,
@@ -525,10 +527,12 @@ class ISXM_Tools {
             'attach_count'   => $state['attach_count'],
             'bucket'         => $state['bucket'],
             'endpoint'       => $state['endpoint'],
-        ] );
+        ];
+
+        ISXM_Sync::save_result( $run_id, $result );
         ISXM_Sync::delete_state( $run_id );
         ISXM_Sync::cleanup_run_files( $run_id );
-        ISXM_Sync::mark_run();
+        ISXM_Sync::mark_run( ISXM_Sync::result_is_clean( $result ) );
 
         return [ 'processed' => $processed, 'errors' => $errors ];
     }

@@ -208,8 +208,18 @@ class ISXM_Offload {
             return new WP_Error( 'isxs_not_configured', 'ยังตั้งค่า storage ไม่ครบ' );
         }
 
-        $file = get_attached_file( $attachment_id, true );
-        if ( ! $file || ! file_exists( $file ) ) {
+        // Resolved against the CURRENT uploads dir, so an absolute path left
+        // in `_wp_attached_file` by a migration from another host still
+        // finds the file — see relative_local_path().
+        $relative = self::relative_local_path( $attachment_id );
+        if ( $relative === null ) {
+            // Not the same thing as a missing file: there is no usable path
+            // to look for one at, and the fix is repairing the meta.
+            return new WP_Error( 'isxs_bad_meta', 'ข้อมูลไฟล์แนบ (_wp_attached_file) เสียหาย — ซ่อม meta ก่อนจึงจะ offload ได้' );
+        }
+
+        $file = self::local_path( $attachment_id );
+        if ( $file === '' || ! file_exists( $file ) ) {
             // With "Remove Local Media" on, a file already living in some
             // bucket legitimately has no local copy — say so, because the fix
             // (download it back first) is different from a genuinely lost file.
@@ -235,8 +245,10 @@ class ISXM_Offload {
 
         $base_key = ISXM_Settings::key_prefix();
         if ( $settings['use_year_month'] ) {
-            $relative = get_post_meta( $attachment_id, '_wp_attached_file', true );
-            $subdir   = dirname( $relative );
+            // From the normalised relative path, not the raw meta: a stale
+            // absolute path used to turn the whole server path into object
+            // keys (".../home/oldsite/public_html/wp-content/uploads/2017/08/").
+            $subdir = dirname( $relative );
             if ( $subdir !== '.' && $subdir !== '' ) {
                 $base_key .= trailingslashit( $subdir );
             }
@@ -538,8 +550,11 @@ class ISXM_Offload {
             return new WP_Error( 'isxs_not_offloaded', 'รายการนี้ยังไม่ได้ offload' );
         }
 
-        $file = get_attached_file( $attachment_id, true );
-        if ( ! $file ) {
+        // Same normalisation as run_offload(): downloading back to a stale
+        // absolute path from another server would either fail outright or
+        // (worse) recreate that directory tree under the web root.
+        $file = self::local_path( $attachment_id );
+        if ( $file === '' ) {
             return new WP_Error( 'isxs_no_path', 'ไม่ทราบตำแหน่งไฟล์ปลายทาง' );
         }
         $local_dir = trailingslashit( dirname( $file ) );
@@ -654,8 +669,8 @@ class ISXM_Offload {
         }
 
         $uploads   = wp_get_upload_dir();
-        $relative  = get_post_meta( $attachment_id, '_wp_attached_file', true );
-        $subdir    = dirname( $relative );
+        $relative  = (string) self::relative_local_path( $attachment_id );
+        $subdir    = $relative === '' ? '' : dirname( $relative );
         $local_dir = trailingslashit( $uploads['baseurl'] );
         if ( $subdir !== '.' && $subdir !== '' ) {
             $local_dir .= trailingslashit( $subdir );
@@ -853,8 +868,8 @@ class ISXM_Offload {
             return [];
         }
 
-        $relative = get_post_meta( $attachment_id, '_wp_attached_file', true );
-        $subdir   = dirname( $relative );
+        $relative = (string) self::relative_local_path( $attachment_id );
+        $subdir   = $relative === '' ? '' : dirname( $relative );
         $uploads  = wp_get_upload_dir();
         $base_url = $uploads['baseurl'];
         $base_alt = ( strpos( $base_url, 'https://' ) === 0 )
@@ -1092,6 +1107,98 @@ class ISXM_Offload {
     /* ---------------------------------------------------------------------
      * Helpers
      * ------------------------------------------------------------------ */
+
+    /**
+     * Where an attachment's primary file really lives, as an uploads-
+     * relative path — the one source of truth every other path in this
+     * class is built from.
+     *
+     * `get_attached_file()` cannot be trusted on its own. WordPress hands
+     * back `_wp_attached_file` verbatim whenever it already looks absolute,
+     * and returns it *relative* when `wp_get_upload_dir()` reports an error
+     * (an unwritable uploads dir, a broken UPLOADS constant). Both shapes
+     * show up on real sites — a migration from another host leaves absolute
+     * paths like `/home/oldsite/public_html/wp-content/uploads/2017/08/x.jpg`
+     * in the meta — and both make `file_exists()` fail on a file that is
+     * sitting right there in uploads, which surfaced as "ไม่พบไฟล์ต้นฉบับ"
+     * on attachments the Media Library displays perfectly well.
+     *
+     * So: normalise to a path relative to the CURRENT uploads basedir and
+     * rebuild the absolute path from there, the way WP Offload Media does
+     * it (see its Media_Library_Item::__construct/full_source_path). A path
+     * that survives this is correct no matter which server the database was
+     * moved from.
+     *
+     * @param int $attachment_id Attachment post ID.
+     * @return string|null Uploads-relative path (e.g. "2017/08/x.jpg"),
+     *                     or null when the meta holds nothing usable.
+     */
+    public static function relative_local_path( $attachment_id ) {
+        $meta = get_post_meta( $attachment_id, '_wp_attached_file', true );
+        if ( ! is_string( $meta ) || trim( $meta ) === '' ) {
+            return null;
+        }
+
+        $path    = wp_normalize_path( trim( $meta ) );
+        $uploads = wp_get_upload_dir();
+        $basedir = isset( $uploads['basedir'] ) ? wp_normalize_path( trailingslashit( $uploads['basedir'] ) ) : '';
+
+        // 1. Absolute, under THIS site's uploads dir — strip the prefix.
+        if ( $basedir !== '' && strpos( $path, $basedir ) === 0 ) {
+            $path = substr( $path, strlen( $basedir ) );
+        } elseif ( ( $pos = strpos( $path, 'wp-content/uploads/' ) ) !== false ) {
+            // 2. Absolute, but from a different server (or a different
+            //    directory layout) — keep only the part after the uploads
+            //    dir, which is the same on every install.
+            $path = substr( $path, $pos + strlen( 'wp-content/uploads/' ) );
+        }
+        // 3. Anything else is already relative to the uploads dir, which is
+        //    what WordPress stores in the normal case.
+
+        $path = ltrim( $path, '/' );
+
+        // A traversal in the relative part would escape the uploads dir just
+        // as effectively as an absolute path; the per-file safe_filename()
+        // gate only ever sees basenames, so the directory part is checked
+        // here.
+        if ( $path === '' || strpos( $path, '../' ) !== false || strpos( $path, './' ) === 0 ) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Absolute path of an attachment's primary file, resolved against the
+     * current uploads directory — see relative_local_path().
+     *
+     * @param int $attachment_id Attachment post ID.
+     * @return string Absolute path, or '' when the meta holds nothing usable.
+     */
+    public static function local_path( $attachment_id ) {
+        $relative = self::relative_local_path( $attachment_id );
+        if ( $relative === null ) {
+            return '';
+        }
+        $uploads = wp_get_upload_dir();
+        if ( empty( $uploads['basedir'] ) ) {
+            return '';
+        }
+        return wp_normalize_path( trailingslashit( $uploads['basedir'] ) ) . $relative;
+    }
+
+    /**
+     * Whether an attachment's primary file is present on this server.
+     * Used wherever the plugin has to tell "no local copy" apart from
+     * "the recorded path is stale", so every caller agrees.
+     *
+     * @param int $attachment_id Attachment post ID.
+     * @return bool
+     */
+    public static function local_file_exists( $attachment_id ) {
+        $path = self::local_path( $attachment_id );
+        return $path !== '' && file_exists( $path );
+    }
 
     /**
      * All file names belonging to an attachment (original, scaled original,

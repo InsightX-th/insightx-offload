@@ -1214,28 +1214,6 @@
   background: var(--isxs-danger);
 }
 
-/* "ตรงกันทั้งหมดแล้ว" — green inline confirmation next to the stats,
-   same dot language as the partial/failed status rows. */
-.isxs-sync-inline-ok {
-  margin: 8px 0 0;
-  color: var(--isxs-ok);
-  font-weight: 600;
-  font-size: 13.5px;
-}
-.isxs-sync-inline-ok[hidden] {
-  display: none;
-}
-.isxs-sync-inline-ok::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--isxs-ok);
-  margin-right: 7px;
-  vertical-align: 1px;
-}
-
 .isxs-ring {
   --pct: 0;
   width: 116px;
