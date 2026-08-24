@@ -555,10 +555,11 @@ class ISXM_Items {
         foreach ( $rows as $row ) {
             $last_id = (int) $row->post_id;
             $record  = maybe_unserialize( $row->meta_value );
-            // A record with no base_key/files can't be acted on by any tool
+            // A record with no file list can't be acted on by any tool
             // (no keys to read, delete or verify) — copying it would only
-            // inflate the counts with rows nothing can use.
-            if ( ! is_array( $record ) || empty( $record['base_key'] ) || empty( $record['files'] ) ) {
+            // inflate the counts with rows nothing can use. An empty
+            // base_key is fine: that is a bucket-root object.
+            if ( ! ISXM_Offload::has_record( $record ) ) {
                 $skipped++;
                 continue;
             }

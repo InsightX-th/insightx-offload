@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.4
+Stable tag: 0.2.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,13 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.5 =
+* แก้บั๊ก: ไฟล์ที่ถูก offload ไปวางที่ root ของ bucket (ปิด Prefix + ระบุประเภทเนื้อหาไม่ได้ ทำให้
+  base_key เป็นค่าว่าง) ถูกทุกจุดของปลั๊กอินตีความว่า "ยังไม่ได้ offload" เพราะเช็คด้วย empty()
+  แทน isset() — ผลคือ URL ไม่เปลี่ยนไปเสิร์ฟจาก bucket, การเขียน URL ถาวรลง DB ไม่ทำงาน,
+  Sync มองไม่เห็นไฟล์ที่มีอยู่จริง
+* แก้ URL ที่ได้จากไฟล์ root ของ bucket มี slash คู่ (เช่น .../bucket//file.jpg)
 
 = 0.2.4 =
 * เพิ่มการแยกโฟลเดอร์บน bucket ตามประเภทเนื้อหา — สินค้า ไฟล์ดาวน์โหลดสินค้า บทความ โปรโมชั่น

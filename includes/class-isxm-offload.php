@@ -90,6 +90,55 @@ class ISXM_Offload {
     }
 
     /**
+     * Whether a tracking record can actually be acted on.
+     *
+     * `base_key` may legitimately be the empty string: that is a
+     * bucket-root object, which is exactly what an empty prefix plus a
+     * content type nothing could classify produces. So the test is
+     * isset(), not empty() — empty('') is true, and every guard that used
+     * it treated a perfectly good root object as "never offloaded",
+     * silently disabling delivery, the permanent URL rewrite and Sync for
+     * those files.
+     *
+     * `files` still has to be a non-empty array: with no recorded
+     * filenames there is nothing to serve, delete or verify.
+     *
+     * @param mixed $info The `_isxs_offload` meta array, or anything else.
+     * @return bool
+     */
+    public static function has_record( $info ) {
+        return is_array( $info )
+            && isset( $info['base_key'] )
+            && ! empty( $info['files'] )
+            && is_array( $info['files'] );
+    }
+
+    /**
+     * The directory part of an object key, ready to splice into a URL:
+     * either '' for a bucket-root object or the segments with a trailing
+     * slash.
+     *
+     * Built from non-empty segments only. explode( '/', '' ) yields [ '' ],
+     * so joining the raw split emitted a leading empty segment and every
+     * root-object URL came out with a doubled slash.
+     *
+     * @param array $info   The `_isxs_offload` meta array.
+     * @param bool  $encode Whether to rawurlencode each segment.
+     * @return string
+     */
+    public static function key_path( $info, $encode = true ) {
+        $base     = ( is_array( $info ) && isset( $info['base_key'] ) ) ? (string) $info['base_key'] : '';
+        $segments = array_filter( explode( '/', untrailingslashit( $base ) ), 'strlen' );
+        if ( ! $segments ) {
+            return '';
+        }
+        if ( $encode ) {
+            $segments = array_map( 'rawurlencode', $segments );
+        }
+        return implode( '/', $segments ) . '/';
+    }
+
+    /**
      * Persist one attachment's tracking record to both stores.
      *
      * @param int   $attachment_id
@@ -680,7 +729,7 @@ class ISXM_Offload {
      * @return array List of [ 'old' => string, 'new' => string ].
      */
     public static function reverse_url_pairs( $attachment_id, array $info ) {
-        if ( empty( $info['files'] ) || empty( $info['base_key'] ) ) {
+        if ( ! self::has_record( $info ) ) {
             return [];
         }
 
@@ -707,13 +756,13 @@ class ISXM_Offload {
         }
         $bases = array_unique( $bases );
 
-        $encoded_base = implode( '/', array_map( 'rawurlencode', explode( '/', untrailingslashit( $info['base_key'] ) ) ) );
+        $encoded_base = self::key_path( $info );
 
         $pairs = [];
         foreach ( $info['files'] as $filename ) {
             $new = $local_dir . $filename;
             foreach ( $bases as $base ) {
-                $pairs[] = [ 'old' => $base . '/' . $encoded_base . '/' . rawurlencode( $filename ), 'new' => $new ];
+                $pairs[] = [ 'old' => $base . '/' . $encoded_base . rawurlencode( $filename ), 'new' => $new ];
             }
         }
         return $pairs;
@@ -766,7 +815,7 @@ class ISXM_Offload {
             return false;
         }
         $info = self::get_record( $attachment_id );
-        if ( ! is_array( $info ) || empty( $info['base_key'] ) || empty( $info['files'] ) ) {
+        if ( ! self::has_record( $info ) ) {
             return false;
         }
         // Only files that actually reached the bucket may be rewritten. A
@@ -791,12 +840,11 @@ class ISXM_Offload {
      * @return string
      */
     public static function build_remote_url( $info, $filename ) {
-        $segments = array_map( 'rawurlencode', explode( '/', untrailingslashit( $info['base_key'] ) ) );
         // Built against the bucket this file actually lives in (per its own
         // record), not whichever destination happens to be selected now —
         // see ISXM_Settings::public_base_url_for().
         $base = ISXM_Settings::public_base_url_for( is_array( $info ) ? $info : [] );
-        return $base . '/' . implode( '/', $segments ) . '/' . rawurlencode( $filename );
+        return $base . '/' . self::key_path( $info ) . rawurlencode( $filename );
     }
 
     /**
@@ -880,7 +928,7 @@ class ISXM_Offload {
         }
 
         $info = self::get_record( $attachment_id );
-        if ( ! is_array( $info ) || empty( $info['files'] ) || empty( $info['base_key'] ) ) {
+        if ( ! self::has_record( $info ) ) {
             return [];
         }
 
@@ -949,7 +997,7 @@ class ISXM_Offload {
             return $image_meta;
         }
         $info = self::get_record( $attachment_id );
-        if ( ! is_array( $info ) || empty( $info['base_key'] ) ) {
+        if ( ! is_array( $info ) || ! isset( $info['base_key'] ) ) {
             return $image_meta;
         }
 
@@ -960,12 +1008,17 @@ class ISXM_Offload {
         // must use whichever form THIS src actually uses.
         $use_encoded = ( rawurldecode( $image_src ) !== $image_src );
 
-        $base_for_match = $use_encoded
-            ? implode( '/', array_map( 'rawurlencode', explode( '/', untrailingslashit( $info['base_key'] ) ) ) ) . '/'
-            : $info['base_key'];
+        $base_for_match = self::key_path( $info, $use_encoded );
 
         // Only adjust when the src actually points at the offloaded copy.
-        if ( strpos( $image_src, '/' . $base_for_match ) === false ) {
+        // A bucket-root key has no path to look for, and testing for a bare
+        // '/' would match literally every URL — rewriting the meta of
+        // images that were never offloaded. Match the delivery base there.
+        if ( $base_for_match === '' ) {
+            if ( strpos( $image_src, ISXM_Settings::public_base_url_for( $info ) . '/' ) !== 0 ) {
+                return $image_meta;
+            }
+        } elseif ( strpos( $image_src, '/' . $base_for_match ) === false ) {
             return $image_meta;
         }
 
@@ -1071,7 +1124,7 @@ class ISXM_Offload {
         }
 
         $info = self::get_record( $attachment_id );
-        if ( ! is_array( $info ) || empty( $info['base_key'] ) || empty( $info['files'] ) ) {
+        if ( ! self::has_record( $info ) ) {
             return null;
         }
         if ( ! in_array( $filename, $info['files'], true ) ) {

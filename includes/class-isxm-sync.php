@@ -83,7 +83,7 @@ class ISXM_Sync {
      * @return string[] Object keys, in the order files were recorded.
      */
     public static function expected_keys( array $info ) {
-        if ( empty( $info['base_key'] ) || empty( $info['files'] ) || ! is_array( $info['files'] ) ) {
+        if ( ! ISXM_Offload::has_record( $info ) ) {
             return [];
         }
         $keys = [];
@@ -129,13 +129,16 @@ class ISXM_Sync {
      */
     public static function primary_exists_on_destination( array $info ) {
         $primary = self::primary_key( $info );
-        if ( $primary === '' || empty( $info['base_key'] ) ) {
+        if ( $primary === '' || ! isset( $info['base_key'] ) ) {
             return false;
         }
 
         $client = ISXM_Offload::client_for_info( $info );
         $token  = '';
         do {
+            // A bucket-root record has an empty base_key, so this degrades
+            // to an unprefixed listing. Correct, but it walks the whole
+            // bucket — keep an eye on it if root objects become common.
             $page = $client->list_objects_keys_page( $token, 1000, $info['base_key'] );
             if ( is_wp_error( $page ) ) {
                 return false;
