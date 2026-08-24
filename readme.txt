@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.5
+Stable tag: 0.2.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,13 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.6 =
+* เพิ่มตัวเลือก "ไม่สร้างรูปขนาดย่อ" — ปิดการสร้าง thumbnail/medium/large/1536/2048 ของ
+  WordPress ทั้งหมด (รวมขนาดของ WooCommerce และธีม) อัปโหลดหนึ่งครั้งได้ไฟล์เดียวขึ้น bucket
+  เก็บไฟล์ต้นฉบับไว้ตามเดิมโดยไม่ย่อเป็น -scaled เหมาะกับเว็บที่ดึงรูปแบบ headless แล้วไปย่อเอง
+  ปิดไว้เป็นค่าเริ่มต้น มีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น (คำเตือน: เปิดแล้ว srcset จะหาย
+  และทุกจุดที่ขอรูปเล็กจะได้ไฟล์เต็มแทน)
 
 = 0.2.5 =
 * แก้บั๊ก: ไฟล์ที่ถูก offload ไปวางที่ root ของ bucket (ปิด Prefix + ระบุประเภทเนื้อหาไม่ได้ ทำให้

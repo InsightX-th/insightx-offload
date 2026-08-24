@@ -30,6 +30,15 @@ class ISXM_Settings {
             // Storage behaviour
             'offload_enabled'    => false,
             'remove_local'       => false,
+            // Stop WordPress generating the intermediate image sizes at all,
+            // so an upload is one object on the bucket instead of a dozen.
+            // Off by default: with no sizes, srcset disappears and every
+            // template asking for 'thumbnail' gets the full-size file — fine
+            // for a headless site that resizes downstream, a regression for
+            // a theme-rendered one. Also lifts big_image_size_threshold, or
+            // WordPress would still replace a wide original with a -scaled
+            // copy and defeat the point. Applies to new uploads only.
+            'disable_thumbnails' => false,
             // Write the new remote URLs straight into post_content /
             // postmeta / options / guid after every offload (permanent
             // rewrite). When off, offloading only uploads files and relies

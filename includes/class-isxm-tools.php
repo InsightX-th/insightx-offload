@@ -109,7 +109,7 @@ class ISXM_Tools {
         $this->guard();
 
         $current = ISXM_Settings::all();
-        $bools   = [ 'offload_enabled', 'remove_local', 'persist_urls', 'use_prefix', 'use_year_month', 'use_object_version', 'deliver_enabled', 'force_https', 'assets_enabled', 'assets_force_https', 'source_use_year_month', 'use_type_folder' ];
+        $bools   = [ 'offload_enabled', 'remove_local', 'persist_urls', 'use_prefix', 'use_year_month', 'use_object_version', 'deliver_enabled', 'force_https', 'assets_enabled', 'assets_force_https', 'source_use_year_month', 'use_type_folder', 'disable_thumbnails' ];
 
         $settings = [];
         foreach ( $bools as $key ) {

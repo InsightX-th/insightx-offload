@@ -189,6 +189,12 @@ class ISXM_Offload {
     private static $url_post_cache = [];
 
     public function __construct() {
+        // Ahead of offload_on_generate below: the sizes have to be gone from
+        // the metadata before collect_filenames() reads it, or the files it
+        // uploads and the files WordPress actually made disagree.
+        add_filter( 'intermediate_image_sizes_advanced', [ $this, 'maybe_drop_image_sizes' ], 99, 1 );
+        add_filter( 'big_image_size_threshold', [ $this, 'maybe_keep_original_size' ], 99, 1 );
+
         add_filter( 'wp_generate_attachment_metadata', [ $this, 'offload_on_generate' ], 110, 2 );
         add_action( 'delete_attachment', [ $this, 'delete_remote_on_delete' ], 10, 1 );
 
@@ -196,6 +202,54 @@ class ISXM_Offload {
         add_filter( 'wp_calculate_image_srcset_meta', [ $this, 'fix_srcset_meta' ], 99, 4 );
         add_filter( 'wp_calculate_image_srcset', [ $this, 'rewrite_srcset' ], 99, 5 );
         add_filter( 'the_content', [ $this, 'rewrite_content_urls' ], 99 );
+    }
+
+    /* ---------------------------------------------------------------------
+     * Image size generation
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Filter: intermediate_image_sizes_advanced.
+     *
+     * With `disable_thumbnails` on, hand WordPress an empty size list so an
+     * upload produces exactly one file — the original — and therefore one
+     * object on the bucket instead of a dozen. Every registered size goes,
+     * core's and WooCommerce's and the theme's alike: a partial list would
+     * just be the Media settings screen again, and the point here is one
+     * file per upload.
+     *
+     * Only new uploads are affected — sizes already generated stay on disk
+     * and in the attachment metadata, so nothing that is already published
+     * changes.
+     *
+     * @param array $sizes Size definitions keyed by name.
+     * @return array
+     */
+    public function maybe_drop_image_sizes( $sizes ) {
+        if ( ! ISXM_Settings::get( 'disable_thumbnails' ) ) {
+            return $sizes;
+        }
+        return [];
+    }
+
+    /**
+     * Filter: big_image_size_threshold.
+     *
+     * Dropping the intermediate sizes is not enough on its own: above the
+     * threshold (2560px by default) WordPress resizes the upload and makes
+     * the `-scaled` copy the attached file, so a "one file" upload still
+     * arrives on the bucket as a downsized derivative and the original is
+     * only reachable through `original_image`. Returning false keeps the
+     * file that was uploaded as the file that is stored.
+     *
+     * @param int $threshold Width/height in pixels, or false to disable.
+     * @return int|false
+     */
+    public function maybe_keep_original_size( $threshold ) {
+        if ( ! ISXM_Settings::get( 'disable_thumbnails' ) ) {
+            return $threshold;
+        }
+        return false;
     }
 
     /* ---------------------------------------------------------------------
