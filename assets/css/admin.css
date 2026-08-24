@@ -959,6 +959,12 @@
 .isxs-toggle-warn .isxs-toggle-text p {
   color: var(--isxs-warn);
 }
+/* A toggle whose setting no longer affects the key, because the content
+   folder supersedes it. Still clickable — it applies again the moment the
+   content folder is off, or to files the content rules cannot classify. */
+.isxs-toggle.is-superseded {
+  opacity: 0.5;
+}
 .isxs-toggle-row {
   display: flex;
   gap: 30px;

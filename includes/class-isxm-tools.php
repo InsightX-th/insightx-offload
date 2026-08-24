@@ -109,7 +109,7 @@ class ISXM_Tools {
         $this->guard();
 
         $current = ISXM_Settings::all();
-        $bools   = [ 'offload_enabled', 'remove_local', 'persist_urls', 'use_prefix', 'use_year_month', 'use_object_version', 'deliver_enabled', 'force_https', 'assets_enabled', 'assets_force_https', 'source_use_year_month' ];
+        $bools   = [ 'offload_enabled', 'remove_local', 'persist_urls', 'use_prefix', 'use_year_month', 'use_object_version', 'deliver_enabled', 'force_https', 'assets_enabled', 'assets_force_https', 'source_use_year_month', 'use_type_folder' ];
 
         $settings = [];
         foreach ( $bools as $key ) {
@@ -128,6 +128,17 @@ class ISXM_Tools {
 
         $settings['prefix']        = isset( $_POST['prefix'] ) ? self::sanitize_prefix( $_POST['prefix'] ) : '';
         $settings['source_prefix'] = isset( $_POST['source_prefix'] ) ? self::sanitize_prefix( $_POST['source_prefix'] ) : '';
+
+        // Folder names go straight into an object key, so they get
+        // sanitize_title() rather than sanitize_text_field() — that also
+        // rules out the traversal and separator characters a key must not
+        // contain. An empty name would collapse a path level (and could
+        // collide two content types into one folder), so blank falls back
+        // to the default instead of being stored.
+        foreach ( ISXM_Settings::type_folder_fields() as $folder_key => $folder_meta ) {
+            $folder_value = isset( $_POST[ $folder_key ] ) ? sanitize_title( wp_unslash( $_POST[ $folder_key ] ) ) : '';
+            $settings[ $folder_key ] = $folder_value !== '' ? $folder_value : $folder_meta['default'];
+        }
 
         $settings['source_public_base_url'] = isset( $_POST['source_public_base_url'] )
             ? esc_url_raw( trim( wp_unslash( $_POST['source_public_base_url'] ) ) )

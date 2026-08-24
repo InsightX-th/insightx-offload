@@ -157,7 +157,7 @@
     $btn
       .toggleClass("is-on")
       .attr("aria-checked", $btn.hasClass("is-on") ? "true" : "false");
-    syncPrefixField();
+    syncConditionalFields();
     updateUrlPreview();
     // Connection-card toggles (path_style/send_public_acl) save via
     // their own card's "บันทึก" button instead — only the Storage/
@@ -167,8 +167,19 @@
     }
   });
 
-  const syncPrefixField = () => {
+  // Fields that only apply while their own toggle is on — hidden rather
+  // than disabled, so an off feature does not look like a setting you
+  // forgot to fill in.
+  const syncConditionalFields = () => {
     $("#isxs-prefix-field").toggle(isOn("use_prefix"));
+    $("#isxs-typefolder-fields").toggle(isOn("use_type_folder"));
+    // Year/month and version are skipped server-side once a file lands in a
+    // content folder, so show them as inert rather than leaving two toggles
+    // that look on but no longer do anything.
+    const flattened = isOn("use_type_folder");
+    $('.isxs-switch[data-setting="use_year_month"], .isxs-switch[data-setting="use_object_version"]')
+      .closest(".isxs-toggle")
+      .toggleClass("is-superseded", flattened);
   };
 
   /* ------------------------------------------------------------------
@@ -192,6 +203,13 @@
     return bucket + ".s3." + region + ".amazonaws.com";
   };
 
+  // Preview one representative content type — a product image, since that
+  // is the case most people are configuring for.
+  const typeFolderSample = () => {
+    const folder = $.trim($("#isxs-product-folder").val()) || "products";
+    return folder + "/ชื่อสินค้า/";
+  };
+
   const updateUrlPreview = () => {
     const now = new Date();
     const ym = now.getFullYear() + "/" + ("0" + (now.getMonth() + 1)).slice(-2);
@@ -208,9 +226,11 @@
 
       part("scheme", isOn("force_https") ? "https://" : "http://", true);
       part("domain", currentDomain(), true);
+      const flattened = isOn("use_type_folder");
       part("prefix", prefix, isOn("use_prefix"));
-      part("yearmonth", ym + "/", isOn("use_year_month"));
-      part("version", "48291736/", isOn("use_object_version"));
+      part("typefolder", typeFolderSample(), flattened);
+      part("yearmonth", ym + "/", isOn("use_year_month") && !flattened);
+      part("version", "48291736/", isOn("use_object_version") && !flattened);
     });
 
     // Assets preview (tab ทรัพยากร) — CDN domain fronts the site, so only
@@ -234,14 +254,14 @@
     }
   };
 
-  $("#isxs-prefix, #isxs-cdn-domain, #isxs-assets-cdn-domain").on(
+  $("#isxs-prefix, #isxs-cdn-domain, #isxs-assets-cdn-domain, #isxs-product-folder").on(
     "input",
     updateUrlPreview,
   );
   // 'change' (fires on blur/Enter, not per keystroke) auto-saves these —
   // 'input' above only drives the live preview.
   $(
-    "#isxs-prefix, #isxs-cdn-domain, #isxs-assets-cdn-domain, #isxs-source-prefix, #isxs-source-public-url",
+    "#isxs-prefix, #isxs-cdn-domain, #isxs-assets-cdn-domain, #isxs-source-prefix, #isxs-source-public-url, [data-folder-field]",
   ).on("change", () => {
     saveSettingsDebounced();
   });
@@ -314,6 +334,12 @@
           data[key] = $(el).hasClass("is-on") ? 1 : 0;
         }
       });
+    // Folder names are read off the markup rather than listed here, so
+    // adding a content type stays a one-place change in PHP.
+    $("[data-folder-field]").each((index, el) => {
+      const $el = $(el);
+      data[$el.data("folder-field")] = $.trim($el.val());
+    });
     return data;
   };
 
@@ -1582,7 +1608,7 @@
    * Init
    * ---------------------------------------------------------------- */
 
-  syncPrefixField();
+  syncConditionalFields();
   updateUrlPreview();
   applyStats(cfg.stats);
 

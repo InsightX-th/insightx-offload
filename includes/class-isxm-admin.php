@@ -249,6 +249,34 @@ class ISXM_Admin {
                                 </div>
                             </div>
 
+                            <!-- Folder structure card -->
+                            <div class="isxs-card isxs-typefolder-card">
+                                <div class="isxs-card-head">
+                                    <div class="isxs-card-head-title">
+                                        <div>
+                                            <h2>โครงสร้างโฟลเดอร์</h2>
+                                            <p class="isxs-card-sub">จัดกลุ่มไฟล์บน bucket แยกตามประเภทเนื้อหา</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="isxs-card-body">
+                                    <?php $this->toggle( 'use_type_folder', $s['use_type_folder'], 'แยกโฟลเดอร์ตามประเภทเนื้อหา', 'ชื่อโฟลเดอร์บน bucket แยกตามประเภทเนื้อหา — เปลี่ยนแล้วมีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น ไฟล์เก่าที่อัปโหลดไปแล้วยังอยู่ path เดิม' ); ?>
+                                    <div class="isxs-grid-2 isxs-indent" id="isxs-typefolder-fields">
+                                        <?php foreach ( ISXM_Settings::type_folder_fields() as $isxm_folder_key => $isxm_folder_meta ) :
+                                            $isxm_folder_id = 'isxs-' . str_replace( '_', '-', $isxm_folder_key );
+                                            ?>
+                                            <div class="isxs-field">
+                                                <label for="<?php echo esc_attr( $isxm_folder_id ); ?>"><?php echo esc_html( $isxm_folder_meta['label'] ); ?></label>
+                                                <input type="text" id="<?php echo esc_attr( $isxm_folder_id ); ?>" data-folder-field="<?php echo esc_attr( $isxm_folder_key ); ?>" placeholder="<?php echo esc_attr( $isxm_folder_meta['default'] ); ?>" value="<?php echo esc_attr( $s[ $isxm_folder_key ] ); ?>">
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="isxs-hint isxs-indent">เปิดแล้วไฟล์ที่เข้าเงื่อนไขจะข้าม Year &amp; Month กับ Object Version อัตโนมัติ ได้ path สั้นแบบ <code>products/ชื่อสินค้า/ไฟล์.jpg</code> — ปิด Prefix ในการ์ด “การตั้งค่าจัดเก็บไฟล์” ด้วยถ้าอยากได้สั้นที่สุด</p>
+                                    <p class="isxs-hint isxs-indent">ไฟล์ที่ระบุประเภทไม่ได้ (ไม่ได้ผูกกับสินค้า/บทความ/หมวดหมู่) ยังใช้ Year &amp; Month และ Object Version ตามเดิม</p>
+                                    <p class="isxs-hint isxs-indent">ข้อควรระวัง: พอตัด Year &amp; Month กับ Object Version ออก ไฟล์คนละตัวที่ชื่อซ้ำกันใต้สินค้าเดียวกันจะทับกันบน bucket ได้</p>
+                                </div>
+                            </div>
+
                             <!-- Delivery Settings card -->
                             <div class="isxs-card isxs-delivery-card">
                                 <div class="isxs-card-head">
@@ -667,6 +695,7 @@ class ISXM_Admin {
                     <span class="isxs-url-part" data-part="scheme"><em>Scheme</em><code>https://</code></span>
                     <span class="isxs-url-part" data-part="domain"><em>Domain</em><code>—</code></span>
                     <span class="isxs-url-part" data-part="prefix"><em>Prefix</em><code>—</code></span>
+                    <span class="isxs-url-part" data-part="typefolder"><em>Type Folder</em><code>—</code></span>
                     <span class="isxs-url-part" data-part="yearmonth"><em>Year &amp; Month</em><code>—</code></span>
                     <span class="isxs-url-part" data-part="version"><em>Version</em><code>—</code></span>
                     <span class="isxs-url-part" data-part="file"><em>Filename</em><code>example.jpg</code></span>

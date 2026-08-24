@@ -244,7 +244,23 @@ class ISXM_Offload {
         $existing = self::get_record( $attachment_id );
 
         $base_key = ISXM_Settings::key_prefix();
-        if ( $settings['use_year_month'] ) {
+        // Content-type folder sits between the site prefix and year/month:
+        // the prefix namespaces the whole site, while grouping by product/
+        // post has to stay OUTSIDE year/month or one product's files scatter
+        // across every month it was ever edited in. Empty when the feature is
+        // off or nothing matched — then the key is exactly what it was before.
+        $type_segment = ISXM_Settings::type_folder_segment( $attachment_id );
+        if ( $type_segment !== '' ) {
+            $base_key .= trailingslashit( $type_segment );
+        }
+        // Once a file is filed under its own content folder, year/month and
+        // version are just noise in the middle of the path — the point of the
+        // content folder is a short, readable key. They still apply to
+        // anything the content rules could NOT classify ($type_segment ===
+        // ''), where they remain the only thing keeping same-named files in
+        // different months apart.
+        $flatten = ( $type_segment !== '' );
+        if ( $settings['use_year_month'] && ! $flatten ) {
             // From the normalised relative path, not the raw meta: a stale
             // absolute path used to turn the whole server path into object
             // keys (".../home/oldsite/public_html/wp-content/uploads/2017/08/").
@@ -253,7 +269,7 @@ class ISXM_Offload {
                 $base_key .= trailingslashit( $subdir );
             }
         }
-        if ( $settings['use_object_version'] ) {
+        if ( $settings['use_object_version'] && ! $flatten ) {
             if ( is_array( $existing ) && ! empty( $existing['version'] ) ) {
                 $version = $existing['version'];
             } else {

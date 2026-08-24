@@ -42,6 +42,20 @@ class ISXM_Settings {
             'use_year_month'     => true,
             'use_object_version' => true,
 
+            // Folder-by-content-type — group offloaded files by the post
+            // type / taxonomy they belong to instead of the flat year/month
+            // layout. Off by default so existing installs keep today's paths
+            // untouched. base_key is frozen per file in the offload record,
+            // so toggling this (or renaming a folder) never moves files that
+            // were already offloaded — only future uploads/re-offloads see it.
+            'use_type_folder'    => false,
+            'product_folder'     => 'products',
+            'download_folder'    => 'downloads',
+            'post_folder'        => 'posts',
+            'promotion_folder'   => 'promotions',
+            'category_folder'    => 'categories',
+            'brand_folder'       => 'brands',
+
             // Delivery
             'deliver_enabled'    => false,
             'force_https'        => true,
@@ -165,6 +179,178 @@ class ISXM_Settings {
             return '';
         }
         return trailingslashit( ltrim( $s['prefix'], '/' ) );
+    }
+
+    /**
+     * The content-type folders, as one list: settings key => label/default.
+     *
+     * Single source of truth for the admin card, the save sanitizer and the
+     * defaults above — the folder names exist in three places otherwise, and
+     * they have to agree or a renamed folder silently falls back to default.
+     */
+    public static function type_folder_fields() {
+        return [
+            'product_folder'   => [ 'label' => 'โฟลเดอร์สินค้า (รูปภาพ)',     'default' => 'products' ],
+            'download_folder'  => [ 'label' => 'โฟลเดอร์ไฟล์ดาวน์โหลดสินค้า', 'default' => 'downloads' ],
+            'post_folder'      => [ 'label' => 'โฟลเดอร์บทความ',              'default' => 'posts' ],
+            'promotion_folder' => [ 'label' => 'โฟลเดอร์โปรโมชั่น',            'default' => 'promotions' ],
+            'category_folder'  => [ 'label' => 'โฟลเดอร์หมวดหมู่สินค้า',       'default' => 'categories' ],
+            'brand_folder'     => [ 'label' => 'โฟลเดอร์แบรนด์',              'default' => 'brands' ],
+        ];
+    }
+
+    /**
+     * Content-type path segment for an attachment — e.g. "products/my-item".
+     *
+     * Empty string means "no rule matched": the caller then builds exactly
+     * the key it would have built with the feature off, so an attachment we
+     * cannot classify is never worse off than before.
+     *
+     * Never carries a trailing slash — the caller joins it.
+     *
+     * @param int $attachment_id
+     * @return string
+     */
+    public static function type_folder_segment( $attachment_id ) {
+        $s = self::all();
+        if ( empty( $s['use_type_folder'] ) ) {
+            return '';
+        }
+
+        $attachment = get_post( $attachment_id );
+        if ( ! $attachment ) {
+            return '';
+        }
+
+        if ( ! empty( $attachment->post_parent ) ) {
+            $segment = self::type_folder_from_parent( $attachment, $s );
+            if ( $segment !== '' ) {
+                return $segment;
+            }
+        }
+
+        return self::type_folder_from_term( $attachment_id, $s );
+    }
+
+    /**
+     * Folder for an attachment that hangs off a post: product image vs
+     * product download, post, promotion.
+     *
+     * @param WP_Post $attachment
+     * @param array   $s Settings.
+     * @return string
+     */
+    private static function type_folder_from_parent( $attachment, $s ) {
+        $parent = get_post( $attachment->post_parent );
+        if ( ! $parent ) {
+            return '';
+        }
+
+        $slug = self::post_slug( $parent );
+
+        switch ( $parent->post_type ) {
+            case 'product':
+                // Images are gallery/featured images; anything else attached
+                // to a product is what the shop hands to a customer.
+                $mime   = get_post_mime_type( $attachment->ID );
+                $folder = ( is_string( $mime ) && strpos( $mime, 'image/' ) === 0 )
+                    ? $s['product_folder']
+                    : $s['download_folder'];
+                return $slug !== '' ? $folder . '/' . $slug : $folder;
+
+            case 'product_variation':
+                // A variation has no meaningful slug of its own — file it
+                // under the product it belongs to.
+                $grandparent = $parent->post_parent ? get_post( $parent->post_parent ) : null;
+                if ( $grandparent && $grandparent->post_type === 'product' ) {
+                    $slug = self::post_slug( $grandparent );
+                }
+                return $slug !== '' ? $s['product_folder'] . '/' . $slug : $s['product_folder'];
+
+            case 'post':
+                return $slug !== '' ? $s['post_folder'] . '/' . $slug : $s['post_folder'];
+
+            case 'promotion-carousel':
+                // Flat on purpose: carousel slides are one small pool, and
+                // per-slide folders would just be noise.
+                return $s['promotion_folder'];
+        }
+
+        return '';
+    }
+
+    /**
+     * Folder for an attachment used as a term image (product category /
+     * brand), which has no post_parent to go on.
+     *
+     * Two lookups, because neither alone covers both moments: during a live
+     * upload from the term edit screen the term meta does not point at the
+     * attachment yet (the term is saved afterwards), and during a bulk
+     * offload — or WP-CLI, or the background queue — there is no referer.
+     *
+     * @param int   $attachment_id
+     * @param array $s Settings.
+     * @return string
+     */
+    private static function type_folder_from_term( $attachment_id, $s ) {
+        $taxonomies = [
+            'product_cat'   => $s['category_folder'],
+            'product_brand' => $s['brand_folder'],
+        ];
+
+        // 1. Live upload: the term edit screen we were uploading from.
+        $referer = wp_get_raw_referer();
+        if ( $referer ) {
+            $query = [];
+            parse_str( (string) wp_parse_url( $referer, PHP_URL_QUERY ), $query );
+            $taxonomy = isset( $query['taxonomy'] ) ? (string) $query['taxonomy'] : '';
+
+            if ( isset( $taxonomies[ $taxonomy ] ) && taxonomy_exists( $taxonomy ) ) {
+                $folder = $taxonomies[ $taxonomy ];
+                if ( ! empty( $query['tag_ID'] ) ) {
+                    $term = get_term( (int) $query['tag_ID'], $taxonomy );
+                    if ( $term && ! is_wp_error( $term ) && $term->slug !== '' ) {
+                        return $folder . '/' . $term->slug;
+                    }
+                }
+                return $folder;
+            }
+        }
+
+        // 2. Bulk offload / re-offload: the term that already points here.
+        global $wpdb;
+        $term_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT term_id FROM {$wpdb->termmeta} WHERE meta_key = 'thumbnail_id' AND meta_value = %s LIMIT 5",
+                (string) $attachment_id
+            )
+        );
+        foreach ( (array) $term_ids as $term_id ) {
+            $term = get_term( (int) $term_id );
+            if ( ! $term || is_wp_error( $term ) ) {
+                continue;
+            }
+            if ( isset( $taxonomies[ $term->taxonomy ] ) ) {
+                $folder = $taxonomies[ $term->taxonomy ];
+                return $term->slug !== '' ? $folder . '/' . $term->slug : $folder;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * A post's URL slug, falling back to its title — a draft/auto-draft has
+     * no post_name yet, and "" would collapse the folder level.
+     *
+     * @param WP_Post $post
+     * @return string
+     */
+    private static function post_slug( $post ) {
+        if ( ! empty( $post->post_name ) ) {
+            return $post->post_name;
+        }
+        return sanitize_title( $post->post_title );
     }
 
     /**
