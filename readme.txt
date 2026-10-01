@@ -2,9 +2,9 @@
 Contributors: insightx
 Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, media, wp-cli
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 0.2.9
+Stable tag: 0.2.10
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,9 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.10 =
+* ปรับ "Tested up to" เป็น WordPress 7.1.2 (แก้คำเตือน "ไม่ได้ถูกทดสอบกับเวิร์ดเพรสรุ่นปัจจุบัน")
 
 = 0.2.9 =
 * เพิ่มภาพปกและไอคอน InsightX Offload สำหรับหน้ารายละเอียดและการอัปเดตปลั๊กอิน พร้อมไฟล์ต้นฉบับ
