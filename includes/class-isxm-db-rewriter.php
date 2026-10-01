@@ -126,6 +126,20 @@ class ISXM_DB_Rewriter {
     }
 
     /**
+     * The same probe for JSON with escaped slashes ("https:\/\/host\/…"),
+     * which is how Elementor and most page builders store whole pages in
+     * postmeta — the plain probe never matched those rows at all.
+     *
+     * @return string LIKE pattern, already esc_like()'d.
+     */
+    public static function uploads_url_probe_escaped() {
+        global $wpdb;
+        // The plain needle, without esc_like()'s escaping and the % wildcards.
+        $needle = trim( str_replace( '\\', '', self::uploads_url_probe() ), '%' );
+        return '%' . $wpdb->esc_like( str_replace( '/', '\\/', $needle ) ) . '%';
+    }
+
+    /**
      * One window of the one-pass rewrite: scan a table with the broad
      * uploads-URL probe (one LIKE condition), page by row id, and for every
      * row that matches, build that row's old→new URL map through
@@ -158,9 +172,10 @@ class ISXM_DB_Rewriter {
 
         $rows = $wpdb->get_results( $wpdb->prepare(
             "SELECT {$id_col} AS id, {$value_col} AS val" . ( $ref_col ? ", {$ref_col} AS ref" : '' ) . "
-             FROM {$table} WHERE {$value_col} LIKE %s AND {$id_col} > %d
+             FROM {$table} WHERE ( {$value_col} LIKE %s OR {$value_col} LIKE %s ) AND {$id_col} > %d
              ORDER BY {$id_col} ASC LIMIT %d",
             self::uploads_url_probe(),
+            self::uploads_url_probe_escaped(),
             (int) $after_id,
             (int) $limit
         ) ); // phpcs:ignore WordPress.DB.PreparedSQL -- $id_col/$value_col/$ref_col are this class's own hard-coded column names
@@ -278,9 +293,32 @@ class ISXM_DB_Rewriter {
         // established, so a later slice can never replace a short URL that an
         // earlier slice's longer URL contains — the same guarantee that
         // ordering provides within one str_replace call.
-        foreach ( array_chunk( $map, self::MAX_CONDITIONS_PER_SCAN, true ) as $slice ) {
+        // Escaped-slash JSON twins ("https:\/\/…") ride along with their plain
+        // URL: the chunks are cut over the plain keys, and the twins are found
+        // by one LIKE per escaped directory instead of one per file —
+        // otherwise every pair's twin doubled the number of full-table scans.
+        $primary = [];
+        foreach ( array_keys( $map ) as $old ) {
+            $old = (string) $old;
+            if ( strpos( $old, '\/' ) === false || ! isset( $map[ str_replace( '\/', '/', $old ) ] ) ) {
+                $primary[] = $old;
+            }
+        }
+
+        foreach ( array_chunk( $primary, self::MAX_CONDITIONS_PER_SCAN ) as $keys ) {
+            $slice   = [];
+            $needles = [];
+            foreach ( $keys as $old ) {
+                $slice[ $old ]   = $map[ $old ];
+                $needles[ $old ] = true;
+                $twin            = str_replace( '/', '\/', $old );
+                if ( $twin !== $old && isset( $map[ $twin ] ) ) {
+                    $slice[ $twin ] = $map[ $twin ];
+                    $needles[ substr( $twin, 0, strrpos( $twin, '\/' ) + 2 ) ] = true;
+                }
+            }
             $conditions = [];
-            // Injection safety of these LIKEs: every $old URL is a VALUE
+            // Injection safety of these LIKEs: every needle is a VALUE
             // (settings strings + attachment meta) passed through
             // $wpdb->prepare() with a %s placeholder and $wpdb->esc_like()
             // for the LIKE wildcards, so no value can inject SQL — and
@@ -291,8 +329,8 @@ class ISXM_DB_Rewriter {
             // ISXM_Tools::sanitize_cdn_domain()/sanitize_prefix()/the
             // http(s) check on source_public_base_url, and attachment
             // filenames in ISXM_Offload::safe_filename().
-            foreach ( array_keys( $slice ) as $old ) {
-                $conditions[] = $wpdb->prepare( "{$value_col} LIKE %s", '%' . $wpdb->esc_like( $old ) . '%' );
+            foreach ( array_keys( $needles ) as $needle ) {
+                $conditions[] = $wpdb->prepare( "{$value_col} LIKE %s", '%' . $wpdb->esc_like( (string) $needle ) . '%' );
             }
             $where = implode( ' OR ', $conditions );
 

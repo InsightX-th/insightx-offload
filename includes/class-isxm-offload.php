@@ -839,7 +839,27 @@ class ISXM_Offload {
                 $pairs[] = [ 'old' => $base . '/' . $encoded_base . rawurlencode( $filename ), 'new' => $new ];
             }
         }
-        return $pairs;
+        return self::with_escaped_pairs( $pairs );
+    }
+
+    /**
+     * Add the escaped-slash JSON form of every pair ("https:\/\/…"), the
+     * way Elementor and most page builders store URLs in postmeta. Without
+     * it the permanent rewrite (and its reverse on Remove) skipped all of
+     * that content, leaving it pointing at local files that may be gone.
+     *
+     * @param array $pairs [ [ 'old' => string, 'new' => string ], … ]
+     * @return array
+     */
+    private static function with_escaped_pairs( array $pairs ) {
+        $out = $pairs;
+        foreach ( $pairs as $pair ) {
+            $old = str_replace( '/', '\\/', $pair['old'] );
+            if ( $old !== $pair['old'] ) {
+                $out[] = [ 'old' => $old, 'new' => str_replace( '/', '\\/', $pair['new'] ) ];
+            }
+        }
+        return $out;
     }
 
     /**
@@ -1036,7 +1056,7 @@ class ISXM_Offload {
             }
         }
 
-        return $pairs;
+        return self::with_escaped_pairs( $pairs );
     }
 
     /**
@@ -1139,7 +1159,9 @@ class ISXM_Offload {
      * (its URLs must be correct even before delivery is on).
      */
     public function rewrite_content_urls( $content ) {
-        if ( ! ISXM_Settings::get( 'deliver_enabled' ) || strpos( $content, 'wp-content/uploads' ) === false ) {
+        // local_url_map() gates on the real uploads location itself (a custom
+        // upload_url_path has no "wp-content/uploads" in it).
+        if ( ! ISXM_Settings::get( 'deliver_enabled' ) ) {
             return $content;
         }
         $map = self::local_url_map( $content );
@@ -1223,7 +1245,7 @@ class ISXM_Offload {
      */
     public static function local_url_map( $content ) {
         $map = [];
-        if ( ! is_string( $content ) || strpos( $content, 'wp-content/uploads' ) === false ) {
+        if ( ! is_string( $content ) || $content === '' ) {
             return $map;
         }
 
@@ -1233,15 +1255,43 @@ class ISXM_Offload {
             ? 'http://' . substr( $base_url, 8 )
             : 'https://' . substr( $base_url, 7 );
 
-        $pattern = '#(?:' . preg_quote( $base_url, '#' ) . '|' . preg_quote( $base_alt, '#' ) . ')/([^\s"\'<>\)]+)#';
-
-        if ( ! preg_match_all( $pattern, $content, $matches ) ) {
+        // Cheap gate on the REAL uploads location (a custom upload_url_path
+        // included), plain or as escaped-slash JSON.
+        $esc     = function ( $s ) {
+            return str_replace( '/', '\/', $s );
+        };
+        $needle  = substr( $base_url, (int) strpos( $base_url, '//' ) );
+        $plain   = strpos( $content, $needle ) !== false;
+        $escaped = strpos( $content, $esc( $needle ) ) !== false;
+        if ( ! $plain && ! $escaped ) {
             return $map;
         }
-        foreach ( $matches[0] as $url ) {
-            $remote = self::resolve_local_url( $url );
-            if ( $remote !== null && $remote !== $url ) {
-                $map[ $url ] = $remote;
+
+        if ( $plain ) {
+            $pattern = '#(?:' . preg_quote( $base_url, '#' ) . '|' . preg_quote( $base_alt, '#' ) . ')/([^\s"\'<>\)]+)#';
+            if ( preg_match_all( $pattern, $content, $matches ) ) {
+                foreach ( $matches[0] as $url ) {
+                    $remote = self::resolve_local_url( $url );
+                    if ( $remote !== null && $remote !== $url ) {
+                        $map[ $url ] = $remote;
+                    }
+                }
+            }
+        }
+
+        // The same URLs as escaped-slash JSON (Elementor & co.). Non-ASCII
+        // file names appear there as \uXXXX, so each match is decoded with
+        // json_decode() before it is resolved.
+        if ( $escaped ) {
+            $pattern = '#(?:' . preg_quote( $esc( $base_url ), '#' ) . '|' . preg_quote( $esc( $base_alt ), '#' ) . ')\\\\/((?:[^\s"\'<>\)\\\\]|\\\\/|\\\\u[0-9a-fA-F]{4})+)#';
+            if ( preg_match_all( $pattern, $content, $matches ) ) {
+                foreach ( $matches[0] as $escaped_url ) {
+                    $url    = json_decode( '"' . $escaped_url . '"' );
+                    $remote = is_string( $url ) ? self::resolve_local_url( $url ) : null;
+                    if ( $remote !== null ) {
+                        $map[ $escaped_url ] = $esc( $remote );
+                    }
+                }
             }
         }
         return $map;

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-10-01
+
+- **เขียน URL ถาวรของ JSON แบบ escape slash (Elementor และ page builder อื่น)** — ทั้งตอน offload และตอนลบออกจาก bucket เดิมเนื้อหาที่เก็บเป็น JSON ยังชี้ไฟล์ในเครื่องอยู่ (ซึ่งอาจถูกลบไปแล้วถ้าเปิด Remove Local Media)
+- เพิ่มการทดสอบ end-to-end กับ S3 จริงที่ตรวจลายเซ็น SigV4 (SeaweedFS) และ MySQL จริง (`bash tests/e2e/run.sh`): offload ทั้งก้อน, Remove from Bucket ตอนบางขนาดหายจาก bucket, orphan cleanup, Migrate ผ่าน job เดียวกับหน้า admin — รันใน CI ทุก push ด้วย
+
 ## [0.2.7] - 2026-10-01
 
 ### ความปลอดภัย
@@ -113,7 +118,8 @@
 - URL Preview เต็มรูปแบบ (Scheme/Domain/Prefix/Year-Month/Version/Filename)
 - PHP class prefix ใช้ ISXM_ — CLI ใช้ `wp isxm`
 
-[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.8...HEAD
+[0.2.8]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.4...v0.2.5

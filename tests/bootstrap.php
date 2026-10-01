@@ -122,7 +122,8 @@ function wp_get_raw_referer() { return false; }
 function taxonomy_exists() { return false; }
 function get_term() { return null; }
 function wp_get_upload_dir() {
-	return array( 'basedir' => ISXM_TEST_UPLOADS, 'baseurl' => 'https://example.com/wp-content/uploads' );
+	$base = isset( $GLOBALS['isxm_t']['baseurl'] ) ? $GLOBALS['isxm_t']['baseurl'] : 'https://example.com/wp-content/uploads';
+	return array( 'basedir' => ISXM_TEST_UPLOADS, 'baseurl' => $base );
 }
 function attachment_url_to_postid( $url ) {
 	return isset( $GLOBALS['isxm_t']['url_ids'][ $url ] ) ? $GLOBALS['isxm_t']['url_ids'][ $url ] : 0;
@@ -207,8 +208,12 @@ class ISXM_Test_WPDB {
 	public $options  = 'wp_options';
 	public $termmeta = 'wp_termmeta';
 	public function prepare( $query ) { return $query; }
+	public function esc_like( $text ) { return addcslashes( $text, '_%\\' ); }
 	public function get_col() { return array(); }
-	public function get_results() { return empty( $GLOBALS['isxm_t']['wpdb_results'] ) ? array() : array_shift( $GLOBALS['isxm_t']['wpdb_results'] ); }
+	public function get_results( $q = '' ) {
+		$GLOBALS['isxm_t']['sql'][] = $q;
+		return empty( $GLOBALS['isxm_t']['wpdb_results'] ) ? array() : array_shift( $GLOBALS['isxm_t']['wpdb_results'] );
+	}
 	public function __call( $name, $args ) { return null; }
 }
 $GLOBALS['wpdb'] = new ISXM_Test_WPDB();

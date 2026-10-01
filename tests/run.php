@@ -365,7 +365,39 @@ $out  = $o->rewrite_content_urls( $html );
 t( 'O23 content rewrite: known replaced, unknown left alone', $out === '<img src="https://s3.example.test/media/site/2025/08/p.jpg"><img src="https://example.com/wp-content/uploads/2025/08/unknown.jpg">', $out );
 $pairs = ISXM_Offload::collect_url_pairs( 30 );
 $olds  = array_column( $pairs, 'old' );
-t( 'O24 permanent-URL pairs cover http + https for every file', count( $pairs ) === 4 && in_array( 'http://example.com/wp-content/uploads/2025/08/p-300x200.jpg', $olds, true ) );
+$plain = array_filter( $olds, function ( $u ) { return strpos( $u, '\\/' ) === false; } );
+t( 'O24 permanent-URL pairs cover http + https for every file', count( $plain ) === 4 && in_array( 'http://example.com/wp-content/uploads/2025/08/p-300x200.jpg', $olds, true ) );
+
+// Escaped-slash JSON (Elementor & co.) is rewritten too.
+$pairs = ISXM_Offload::collect_url_pairs( 30 );
+$olds  = array_column( $pairs, 'old' );
+t( 'O25 permanent-URL pairs include the escaped-slash JSON form', in_array( 'https:\/\/example.com\/wp-content\/uploads\/2025\/08\/p.jpg', $olds, true ), json_encode( array_slice( $olds, -2 ) ) );
+$json = wp_json_encode( array( 'image' => array( 'url' => 'https://example.com/wp-content/uploads/2025/08/p-300x200.jpg' ) ) );
+$map  = ISXM_Offload::local_url_map( $json );
+$out  = ISXM_DB_Rewriter::recursive_replace_pairs( $json, $map );
+$dec  = json_decode( $out, true );
+t( 'O26 bulk map finds escaped URLs and the JSON stays valid', is_array( $dec ) && $dec['image']['url'] === 'https://s3.example.test/media/site/2025/08/p-300x200.jpg', $out );
+t( 'O27 bulk probe also matches escaped rows', ISXM_DB_Rewriter::uploads_url_probe_escaped() === '%https:\\\\/\\\\/example.com\\\\/wp-content\\\\/uploads%' || strpos( ISXM_DB_Rewriter::uploads_url_probe_escaped(), '\\\\/\\\\/example.com' ) !== false, ISXM_DB_Rewriter::uploads_url_probe_escaped() );
+$rev = array_column( ISXM_Offload::reverse_url_pairs( 30, get_post_meta( 30, ISXM_Offload::META_KEY, true ) ), 'old' );
+t( 'O28 Remove reverses the escaped form too', (bool) array_filter( $rev, function ( $u ) { return strpos( $u, 'https:\/\/s3.example.test\/media\/site' ) === 0; } ), json_encode( $rev ) );
+
+// Custom upload_url_path + non-ASCII file names inside escaped JSON.
+$GLOBALS['isxm_t']['baseurl'] = 'https://cdn.example.com/media';
+update_post_meta( 31, '_wp_attached_file', '2025/09/ภาพ.jpg' );
+update_post_meta( 31, ISXM_Offload::META_KEY, array( 'bucket' => 'media', 'endpoint' => 'https://s3.example.test', 'base_key' => 'site/2025/09/', 'files' => array( 'ภาพ.jpg' ) ) );
+$GLOBALS['isxm_t']['url_ids']['https://cdn.example.com/media/2025/09/ภาพ.jpg'] = 31;
+$json = wp_json_encode( array( 'img' => 'https://cdn.example.com/media/2025/09/ภาพ.jpg' ) ); // ภ… escapes
+$out  = ISXM_DB_Rewriter::recursive_replace_pairs( $json, ISXM_Offload::local_url_map( $json ) );
+$dec  = json_decode( $out, true );
+t( 'O29 custom upload path + Thai name (\\u escapes) in JSON rewritten', is_array( $dec ) && $dec['img'] === 'https://s3.example.test/media/site/2025/09/' . rawurlencode( 'ภาพ.jpg' ), $out );
+unset( $GLOBALS['isxm_t']['baseurl'] );
+
+// One LIKE per escaped directory, not one per file (scan count).
+$GLOBALS['isxm_t']['sql'] = array();
+ISXM_DB_Rewriter::replace_urls_bulk( ISXM_Offload::collect_url_pairs( 30 ) );
+$first = isset( $GLOBALS['isxm_t']['sql'][0] ) ? $GLOBALS['isxm_t']['sql'][0] : '';
+$likes = substr_count( $first, ' LIKE ' );
+t( 'O30 escaped twins add one condition per directory, not per file', count( $GLOBALS['isxm_t']['sql'] ) === 3 && $likes === 4 + 2, "queries=" . count( $GLOBALS['isxm_t']['sql'] ) . " likes=$likes" );
 
 // Content-type folders.
 isxm_test_configure( array(), array( 'use_type_folder' => true ) );
