@@ -42,8 +42,8 @@ class ISXM_CLI {
             return;
         }
         WP_CLI::error( sprintf(
-            'มีงาน "%s" กำลังทำงานอยู่ (%s รายการ) — %s ตอนนี้จะทำงานทับกัน'
-                . "\n" . 'หยุดก่อนด้วย: wp isxm job pause %s   หรือใช้ `wp isxm job run` ไล่ให้จบ',
+            __( 'The job "%s" is running (%s items) — %s now would run on top of it', 'insightx-offload' )
+                . "\n" . __( 'Stop it first with: wp isxm job pause %s   or use `wp isxm job run` to drive it to completion', 'insightx-offload' ),
             ISXM_Tools::tool_label( $running->tool ),
             number_format_i18n( $running->processed ),
             $what,
@@ -302,6 +302,9 @@ class ISXM_CLI {
         if ( $delete_orphans && $result['orphan'] > 0 ) {
             WP_CLI::confirm( 'Delete the orphan objects above (in-prefix only)?' );
             $deleted = ISXM_Sync::cleanup_orphans();
+            if ( is_wp_error( $deleted ) ) {
+                WP_CLI::error( $deleted->get_error_message() );
+            }
             if ( is_wp_error( $deleted ) ) {
                 WP_CLI::error( $deleted->get_error_message() );
             }

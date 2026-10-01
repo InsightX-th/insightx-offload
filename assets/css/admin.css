@@ -558,9 +558,9 @@
   margin: 16px 22px 0;
   border-radius: 10px;
   padding: 11px 15px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--isxs-bg);
 }
 .isxs-alert.is-ok {
   background: var(--isxs-ok-soft);
@@ -819,13 +819,15 @@
 }
 
 .isxs-provider-icon.is-logo {
-  background: var(--isxs-card);
-  border: 1px solid var(--isxs-line);
-  padding: 5px;
+  color: var(--isxs-accent);
+  background: var(--isxs-accent-soft);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
 }
 .isxs-provider-icon.is-logo svg {
-  width: 100%;
-  height: 100%;
+  width: 18px;
+  height: 18px;
 }
 
 .isxs-provider-icon.is-badge {
@@ -955,9 +957,6 @@
   margin: 2px 0 0;
   font-size: 12.5px;
   color: var(--isxs-muted);
-}
-.isxs-toggle-warn .isxs-toggle-text p {
-  color: var(--isxs-warn);
 }
 /* A toggle whose setting no longer affects the key, because the content
    folder supersedes it. Still clickable — it applies again the moment the
@@ -1321,18 +1320,6 @@
 
 /* ---------- Sync/Verify tool ---------- */
 
-.isxs-sync-status.is-stale {
-  color: var(--isxs-warn);
-  border-color: var(--isxs-warn);
-}
-.isxs-sync-status.is-stale .isxs-sync-status-text {
-  color: var(--isxs-warn);
-  font-weight: 600;
-}
-.isxs-sync-status.is-stale .isxs-conn-dot {
-  background: var(--isxs-warn);
-}
-
 .isxs-sync-result {
   margin-top: 12px;
   padding: 10px 14px;
@@ -1546,7 +1533,7 @@
     padding: 14px 16px 16px;
   }
 
-  /* Percent and "n/m รายการ" are nowrap, so on one row they forced the
+  /* Percent and "n/m items" are nowrap, so on one row they forced the
      progress bar down to a few pixels. Bar on its own row, numbers under. */
   .isxs-tool-progress {
     flex-wrap: wrap;

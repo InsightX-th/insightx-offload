@@ -554,9 +554,9 @@ class ISXM_Sync {
      *
      * Attachments whose LOCAL copy is also gone are flagged with the
      * `_isxs_data_loss` meta — there is nothing left to re-upload from, so
-     * the Media Library shows a distinct "ไฟล์หายทั้งสองที่" state instead
+     * the Media Library shows a distinct "File missing everywhere" state instead
      * of silently turning them into plain pending items that will just fail
-     * with "ไม่พบไฟล์ต้นฉบับ".
+     * with "Original file not found".
      *
      * @param int[] $ids Attachment IDs found stale by the scan.
      * @return array{cleaned:int,data_loss:int}
@@ -611,7 +611,16 @@ class ISXM_Sync {
      * @return int|WP_Error Objects deleted.
      */
     public static function cleanup_orphans() {
-        $e = self::build_expected_map();
+        $blocked = self::orphan_cleanup_blocked();
+        if ( $blocked ) {
+            return $blocked;
+        }
+        $started = time();
+        $e       = self::build_expected_map();
+        $blocked = self::orphan_map_blocked( $e );
+        if ( $blocked ) {
+            return $blocked;
+        }
 
         $client = new ISXM_Client();
         $prefix = ISXM_Settings::key_prefix();
@@ -623,13 +632,7 @@ class ISXM_Sync {
             if ( is_wp_error( $page ) ) {
                 return $page;
             }
-            foreach ( $page['keys'] as $key ) {
-                if ( isset( $e['map'][ $key ] ) ) {
-                    continue;
-                }
-                if ( $prefix !== '' && strpos( $key, $prefix ) !== 0 ) {
-                    continue;
-                }
+            foreach ( self::orphan_candidates( $page, $e, $prefix, $started ) as $key ) {
                 $result = $client->delete_object( $key );
                 if ( ! is_wp_error( $result ) ) {
                     $deleted++;
@@ -657,6 +660,82 @@ class ISXM_Sync {
      *                         null (the default) leaves the previous verdict
      *                         alone, for callers that don't have one.
      */
+    /**
+     * Refuse orphan deletion when no prefix scopes it.
+     *
+     * "Orphan" only means "no attachment on THIS site references it". With
+     * no prefix that is the whole bucket — other sites' media, backup
+     * archives, anything else stored there — and one click would delete it
+     * all. A prefix at least bounds the damage to one folder.
+     *
+     * @return WP_Error|null
+     */
+    /** Objects younger than this (seconds before the run began) are never orphans. */
+    const ORPHAN_MIN_AGE = 600;
+
+    /**
+     * The keys of one listing page that may be deleted as orphans.
+     *
+     * Besides "not referenced and inside the prefix", an object must be
+     * older than the run: the expected map is a snapshot, so a file offloaded
+     * while the cleanup runs (a bulk job, or an upload with auto-offload) is
+     * absent from it and would otherwise be deleted right after being
+     * uploaded — with its local copy possibly already removed. Objects the
+     * listing gives no date for are kept for the same reason.
+     *
+     * @param array  $page    list_objects_keys_page() result.
+     * @param array  $e       Expected map (load_expected()/build_expected_map()).
+     * @param string $prefix  Configured key prefix.
+     * @param int    $started Unix time the cleanup run began.
+     * @return string[]
+     */
+    public static function orphan_candidates( array $page, array $e, $prefix, $started ) {
+        $cutoff = (int) $started - self::ORPHAN_MIN_AGE;
+        $keys   = [];
+        foreach ( $page['keys'] as $key ) {
+            if ( isset( $e['map'][ $key ] ) ) {
+                continue;
+            }
+            if ( $prefix !== '' && strpos( $key, $prefix ) !== 0 ) {
+                continue;
+            }
+            if ( ! isset( $page['modified'][ $key ] ) || $page['modified'][ $key ] > $cutoff ) {
+                continue;
+            }
+            $keys[] = $key;
+        }
+        return $keys;
+    }
+
+    /**
+     * Refuse orphan deletion when no media at all is tracked on this
+     * destination. That is what a connection re-saved with a slightly
+     * different endpoint string looks like: every record stops matching,
+     * and the whole prefix would read as orphans.
+     *
+     * @param array|null $e Expected map.
+     * @return WP_Error|null
+     */
+    public static function orphan_map_blocked( $e ) {
+        if ( is_array( $e ) && ! empty( $e['counts'] ) ) {
+            return null;
+        }
+        return new WP_Error(
+            'isxs_orphan_no_media',
+            __( 'No offloaded media is tracked on this destination, so nothing was deleted — check that the connection matches the bucket and endpoint the media was offloaded to', 'insightx-offload' )
+        );
+    }
+
+    public static function orphan_cleanup_blocked() {
+        if ( ISXM_Settings::key_prefix() !== '' ) {
+            return null;
+        }
+        return new WP_Error(
+            'isxs_orphan_no_prefix',
+            __( 'Orphan cleanup needs a bucket prefix — without one every object in the bucket that this site does not use would be deleted, including other sites\' files and backups. Turn on the prefix in "File Storage Settings" first', 'insightx-offload' )
+        );
+    }
+
     public static function mark_run( $clean = null ) {
         update_option( self::LAST_RUN_OPTION, time(), false );
         if ( $clean !== null ) {

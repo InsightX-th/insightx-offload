@@ -14,7 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ISXM_WC_Downloads {
 
-    const PUBLIC_ACL_WARNING = 'ตั้ง ACL แล้วแต่ไฟล์ยังเข้าถึงแบบ public ได้อยู่ — storage นี้อาจไม่รองรับ object ACL (เช่น MinIO, Cloudflare R2) ต้องปิด public access ที่ระดับ bucket policy เอง';
+    /**
+     * A method rather than a constant so the text can be translated.
+     *
+     * @return string
+     */
+    private static function public_acl_warning() {
+        return __( 'ACL was set but the file is still publicly accessible — this storage may not support object ACLs (e.g. MinIO, Cloudflare R2); disable public access in the bucket policy yourself', 'insightx-offload' );
+    }
 
     /**
      * Product/variation IDs with at least one downloadable file, not yet
@@ -79,7 +86,7 @@ class ISXM_WC_Downloads {
     public static function process_product( $product_id ) {
         $product = wc_get_product( $product_id );
         if ( ! $product ) {
-            return new WP_Error( 'isxs_wc_no_product', 'ไม่พบสินค้า' );
+            return new WP_Error( 'isxs_wc_no_product', __( 'Product not found', 'insightx-offload' ) );
         }
 
         $downloads = $product->get_downloads();
@@ -108,20 +115,20 @@ class ISXM_WC_Downloads {
                 if ( is_wp_error( $result ) ) {
                     $notes[] = $download->get_name() . ': ' . $result->get_error_message();
                 } elseif ( self::remote_publicly_readable( $url ) ) {
-                    $notes[] = $download->get_name() . ': ' . self::PUBLIC_ACL_WARNING;
+                    $notes[] = $download->get_name() . ': ' . self::public_acl_warning();
                 }
                 continue;
             }
 
             $attachment_id = attachment_url_to_postid( $url );
             if ( ! $attachment_id ) {
-                $notes[] = $download->get_name() . ': ไม่ใช่ media attachment ของเว็บนี้ — ข้าม';
+                $notes[] = $download->get_name() . __( ': not a media attachment of this site — skipped', 'insightx-offload' );
                 continue;
             }
 
             $info = ISXM_Offload::get_record( $attachment_id );
             if ( ! is_array( $info ) || empty( $info['files'] ) || $info['bucket'] !== $current_bucket ) {
-                $notes[] = $download->get_name() . ': ยังไม่ได้ offload ไปยัง bucket ปัจจุบัน — offload ก่อนแล้วค่อยรันเครื่องมือนี้';
+                $notes[] = $download->get_name() . __( ': not yet offloaded to the current bucket — offload it first, then run this tool', 'insightx-offload' );
                 continue;
             }
 
@@ -143,7 +150,7 @@ class ISXM_WC_Downloads {
             // A 200 alone must not be reported as "now private": probe the
             // file anonymously and warn when it's still world-readable.
             if ( $acl_ok && self::remote_publicly_readable( $correct_url ) ) {
-                $notes[] = $download->get_name() . ': ' . self::PUBLIC_ACL_WARNING;
+                $notes[] = $download->get_name() . ': ' . self::public_acl_warning();
             }
 
             if ( $correct_url !== $url ) {
@@ -163,7 +170,7 @@ class ISXM_WC_Downloads {
                 $product->set_downloads( $downloads );
                 $product->save();
             } catch ( \Exception $e ) {
-                $notes[] = 'อัปเดต URL ของไฟล์ดาวน์โหลดไม่สำเร็จ: ' . wp_strip_all_tags( $e->getMessage() );
+                $notes[] = __( 'Could not update the download file URL: ', 'insightx-offload' ) . wp_strip_all_tags( $e->getMessage() );
             }
         }
 
@@ -172,6 +179,48 @@ class ISXM_WC_Downloads {
         }
         return true;
     }
+
+    /**
+     * `woocommerce_file_download_path` filter: hand a buyer a short-lived
+     * signed link instead of the plain bucket URL.
+     *
+     * This tool makes download objects private, so the plain URL answers
+     * 403 — and on storage that ignores ACLs the plain URL is readable by
+     * anyone who guesses it. A presigned URL works in both cases and expires
+     * on its own. WooCommerce redirects to remote files, so returning one
+     * here is all it takes.
+     *
+     * @param string $file_path Download URL stored on the product.
+     * @return string
+     */
+    public static function presign_download_path( $file_path ) {
+        if ( ! is_string( $file_path ) || $file_path === '' || ! ISXM_Settings::is_configured() ) {
+            return $file_path;
+        }
+
+        // A URL on the current bucket (what process_product() writes).
+        $base_url = untrailingslashit( ISXM_Settings::public_base_url() );
+        $path     = (string) wp_parse_url( $file_path, PHP_URL_PATH );
+        if ( strpos( $file_path, $base_url . '/' ) === 0 ) {
+            $clean = strtok( $file_path, '?#' );
+            return ( new ISXM_Client() )->presigned_url( self::url_to_key( $clean, $base_url ), self::LINK_TTL );
+        }
+
+        // A local uploads URL whose attachment has since been offloaded.
+        $attachment_id = $path !== '' ? attachment_url_to_postid( strtok( $file_path, '?#' ) ) : 0;
+        if ( ! $attachment_id ) {
+            return $file_path;
+        }
+        $info     = ISXM_Offload::get_record( $attachment_id );
+        $filename = ISXM_Offload::safe_filename( rawurldecode( wp_basename( $path ) ) );
+        if ( ! ISXM_Offload::has_record( $info ) || $filename === '' || ! in_array( $filename, $info['files'], true ) ) {
+            return $file_path;
+        }
+        return ISXM_Offload::client_for_info( $info )->presigned_url( $info['base_key'] . $filename, self::LINK_TTL );
+    }
+
+    /** Lifetime of a presigned download link, in seconds. */
+    const LINK_TTL = 300;
 
     /**
      * Reverse of ISXM_Offload::build_remote_url() — recover the object key

@@ -382,7 +382,12 @@ class ISXM_DB_Rewriter {
      */
     public static function recursive_replace_pairs( $value, array $map ) {
         if ( is_serialized( $value ) ) {
-            $data = @unserialize( trim( $value ) );
+            // Only stdClass may be instantiated: these values come from
+            // post_content/postmeta/options, which lower-privileged users can
+            // write, and unserializing an arbitrary class runs its
+            // __wakeup/__destruct (PHP object injection). Any other class
+            // comes back as __PHP_Incomplete_Class and is left untouched.
+            $data = @unserialize( trim( $value ), [ 'allowed_classes' => [ 'stdClass' ] ] );
             if ( $data !== false || trim( $value ) === 'b:0;' ) {
                 return serialize( self::recursive_replace_data( $data, $map ) );
             }
@@ -396,12 +401,23 @@ class ISXM_DB_Rewriter {
      */
     private static function recursive_replace_data( $data, array $map ) {
         if ( is_string( $data ) ) {
+            // A value serialized twice (a plugin that serialize()s before
+            // update_option()) holds a serialized string here. A plain
+            // str_replace would change its contents without its length
+            // prefixes, and the inner value would never unserialize again.
+            if ( is_serialized( $data ) ) {
+                return self::recursive_replace_pairs( $data, $map );
+            }
             return str_replace( array_keys( $map ), array_values( $map ), $data );
         }
         if ( is_array( $data ) ) {
             foreach ( $data as $key => $val ) {
                 $data[ $key ] = self::recursive_replace_data( $val, $map );
             }
+            return $data;
+        }
+        if ( $data instanceof __PHP_Incomplete_Class ) {
+            // Writing to it throws; serialize() puts it back byte-for-byte.
             return $data;
         }
         if ( is_object( $data ) ) {

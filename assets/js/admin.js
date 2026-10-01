@@ -7,6 +7,15 @@
   "use strict";
 
   const cfg = window.isxsAdmin || {};
+  const i18n = cfg.i18n || {};
+
+  // Fill %s / %d / %1$s placeholders in a translated string from cfg.i18n.
+  const fmt = (text, ...args) => {
+    let next = 0;
+    return String(text).replace(/%(\d+\$)?[sd]/g, (m, pos) =>
+      String(pos ? args[parseInt(pos, 10) - 1] : args[next++]),
+    );
+  };
   const connections = cfg.connections || {};
   const providerLogos = cfg.providerLogos || {};
 
@@ -15,7 +24,7 @@
    * configured connection (from the Connections tab) to use as the
    * destination/source; they no longer hold their own endpoint/bucket/key
    * fields. The destination picker exists twice (Storage tab, and the
-   * "ไป" column on the Migrate tab) and is kept in sync in both places.
+   * "To" column on the Migrate tab) and is kept in sync in both places.
    * ---------------------------------------------------------------- */
 
   const badgeStateFor = (slug) => {
@@ -23,16 +32,16 @@
     if (!c || !c.configured) {
       return {
         state: "unknown",
-        text: "ยังไม่ได้ตั้งค่า provider นี้ — ไปตั้งค่าที่แท็บ “การเชื่อมต่อ”",
+        text: i18n.connNotConfigured,
       };
     }
     if (c.status === "ok") {
-      return { state: "ok", text: "เชื่อมต่อสำเร็จ" };
+      return { state: "ok", text: i18n.connOk };
     }
     if (c.status === "error") {
-      return { state: "error", text: c.statusMessage || "เชื่อมต่อไม่สำเร็จ" };
+      return { state: "error", text: c.statusMessage || i18n.connFailed };
     }
-    return { state: "unknown", text: "ยังไม่ได้ทดสอบการเชื่อมต่อ" };
+    return { state: "unknown", text: i18n.connUntested };
   };
 
   const renderConnBadge = ($badge, slug) => {
@@ -62,7 +71,7 @@
     const $dSub = $("#isxs-delivery-head-sub");
     if ($dLogo.length) $dLogo.html(logo);
     if ($dSub.length) {
-      $dSub.text(c.bucket ? `${label} · ${c.bucket}` : `${label} · (ยังไม่ตั้ง bucket)`);
+      $dSub.text(c.bucket ? `${label} · ${c.bucket}` : fmt(i18n.noBucket, label));
     }
 
     $("#isxs-dest-provider-selected-logo").html(logo);
@@ -160,7 +169,7 @@
     syncConditionalFields();
     updateUrlPreview();
     // Connection-card toggles (path_style/send_public_acl) save via
-    // their own card's "บันทึก" button instead — only the Storage/
+    // their own card's "Save" button instead — only the Storage/
     // Migrate tab toggles auto-save here.
     if (!$btn.closest(".isxs-connection-card").length) {
       saveSettingsDebounced();
@@ -207,7 +216,7 @@
   // is the case most people are configuring for.
   const typeFolderSample = () => {
     const folder = $.trim($("#isxs-product-folder").val()) || "products";
-    return folder + "/ชื่อสินค้า/";
+    return folder + "/" + i18n.sampleProduct + "/";
   };
 
   const updateUrlPreview = () => {
@@ -233,7 +242,7 @@
       part("version", "48291736/", isOn("use_object_version") && !flattened);
     });
 
-    // Assets preview (tab ทรัพยากร) — CDN domain fronts the site, so only
+    // Assets preview (Assets tab) — CDN domain fronts the site, so only
     // scheme/domain/path apply; the path stays the theme/plugin file.
     const $asset = $('[data-url-preview="assets"]');
     if ($asset.length) {
@@ -250,7 +259,7 @@
       };
       apart("ascheme", isOn("assets_force_https") ? "https://" : "http://", true);
       apart("adomain", domain || "cdn.example.com", on);
-      apart("apath", "wp-content/themes/ชื่อธีม/style.css", on);
+      apart("apath", "wp-content/themes/" + i18n.sampleTheme + "/style.css", on);
     }
   };
 
@@ -491,7 +500,7 @@
       })
       .fail((xhr) => {
         // A 403 here is a lapsed nonce or a session that was logged out
-        // elsewhere, not a bucket problem — saying "เชื่อมต่อไม่สำเร็จ"
+        // elsewhere, not a bucket problem — saying "Connection failed"
         // sent people hunting through their storage credentials for a
         // fault that was only ever in this tab.
         const expired = xhr && (xhr.status === 403 || xhr.status === 401);
@@ -612,7 +621,7 @@
     const $errors = $card.find(".isxs-tool-errors");
     const originalLabel = $card.data("originalRunLabel");
     // The idle button keeps its per-tool style (e.g. the delete tool's
-    // red "ลบไฟล์ทั้งหมดออกจาก bucket"); while a job is RUNNING it is
+    // red "Remove all files from the bucket"); while a job is RUNNING it is
     // forced to the same blue primary look as the Offload card, then the
     // original style is restored once the run settles.
     const originalRunClass =
@@ -642,10 +651,10 @@
 
     // While a run is going the only useful actions are the two stops, so the
     // start button steps aside entirely rather than sitting there greyed out
-    // saying "กำลังทำงาน…" — the progress bar right below already says that,
+    // saying "Working…" — the progress bar right below already says that,
     // and three buttons in a row read as a choice the user doesn't have.
-    // The card then matches WP Offload Media: [หยุด] [ยกเลิก] while running,
-    // [ยกเลิก] [ทำต่อ] once stopped, [เริ่ม …] when idle.
+    // The card then matches WP Offload Media: [Stop] [Cancel] while running,
+    // [Cancel] [Resume] once stopped, [Start …] when idle.
     $btn.attr("class", originalRunClass);
     $btn
       .attr("hidden", running)
@@ -691,11 +700,12 @@
             : "";
 
     $count.text(
-      (job.total > 0
-        ? job.processed.toLocaleString() + "/" + totalLabel
-        : job.processed.toLocaleString()) +
-        " รายการ" +
-        (statusLabel ? " — " + statusLabel : ""),
+      fmt(
+        i18n.items,
+        job.total > 0
+          ? job.processed.toLocaleString() + "/" + totalLabel
+          : job.processed.toLocaleString(),
+      ) + (statusLabel ? " — " + statusLabel : ""),
     );
 
     const elapsedStr =
@@ -707,19 +717,20 @@
       const phase = phaseLabel(job);
       if (phase) {
         $eta.text(
-          phase + (elapsedStr ? " (ใช้เวลาไปแล้ว " + elapsedStr + ")" : ""),
+          elapsedStr ? fmt(i18n.elapsedParen, phase, elapsedStr) : phase,
         );
       } else {
         const parts = [];
         if (elapsedStr) {
-          parts.push("ใช้เวลาไปแล้ว " + elapsedStr);
+          parts.push(fmt(i18n.elapsed, elapsedStr));
         }
         if (job.eta_seconds > 0) {
           parts.push(
-            "เหลืออีกประมาณ " +
-              formatDuration(job.eta_seconds * 1000) +
-              " · เสร็จประมาณ " +
+            fmt(
+              i18n.eta,
+              formatDuration(job.eta_seconds * 1000),
               formatFinishTime(job.eta_seconds),
+            ),
           );
         } else if (!loopbackOk) {
           parts.push(cfg.i18n.keepTabOpen);
@@ -728,15 +739,15 @@
       }
     } else if (done) {
       $eta.text(
-        elapsedStr ? "เสร็จสิ้น — ใช้เวลาทั้งหมด " + elapsedStr : "",
+        elapsedStr ? fmt(i18n.doneIn, elapsedStr) : "",
       );
     } else if (resumable) {
       $eta.text(
-        elapsedStr ? "หยุดพัก — ใช้เวลาไปแล้ว " + elapsedStr : "",
+        elapsedStr ? fmt(i18n.pausedAfter, elapsedStr) : "",
       );
     } else if (job.state === "cancelled") {
       $eta.text(
-        elapsedStr ? "ยกเลิกแล้ว — ใช้เวลาไป " + elapsedStr : "",
+        elapsedStr ? fmt(i18n.cancelledAfter, elapsedStr) : "",
       );
     } else {
       $eta.text("");
@@ -757,20 +768,21 @@
       if (job.error_count > lines.length) {
         $errors.append(
           $("<li>").text(
-            "…และอีก " +
-              (job.error_count - lines.length).toLocaleString() +
-              " รายการ",
+            fmt(
+              i18n.andMore,
+              (job.error_count - lines.length).toLocaleString(),
+            ),
           ),
         );
       }
       if (job.error_count > 0 && cfg.mediaFailedUrl) {
         $errors.append(
           $('<li class="isxs-tool-errors-summary">')
-            .text("ไม่ผ่าน " + job.error_count.toLocaleString() + " รายการ — ")
+            .text(fmt(i18n.failedCount, job.error_count.toLocaleString()))
             .append(
               $("<a>")
                 .attr("href", cfg.mediaFailedUrl)
-                .text("ดูรายการในหน้าสื่อ"),
+                .text(i18n.viewInMedia),
             ),
         );
       }
@@ -803,35 +815,35 @@
     }
     const when =
       Math.floor((Date.now() / 1000 - lastRun) / 86400) <= 0
-        ? "ตรวจล่าสุดวันนี้"
-        : "ตรวจล่าสุดเมื่อ " +
-          Math.floor((Date.now() / 1000 - lastRun) / 86400) +
-          " วันที่แล้ว";
+        ? i18n.checkedToday
+        : fmt(
+            i18n.checkedDaysAgo,
+            Math.floor((Date.now() / 1000 - lastRun) / 86400),
+          );
 
     let text;
     let state;
     if (!lastRun) {
-      text = "ยังไม่เคยตรวจสอบกับ bucket จริง";
+      text = i18n.neverChecked;
       state = "unknown";
     } else if (clean === true) {
-      text = "ตรงกันทั้งหมดแล้ว";
+      text = i18n.allMatch;
       state = "ok";
     } else if (clean === false) {
-      text = "พบรายการไม่ตรงกัน";
+      text = i18n.mismatch;
       state = "error";
     } else {
       text = when;
       state = "ok";
     }
     if (lastRun && stale) {
-      text += " — นานแล้ว ควรตรวจอีกครั้ง";
+      text += i18n.staleCheck;
     }
 
     $text.text(text);
     // The timestamp still has to be reachable once the verdict takes over
     // the label.
     $badge.attr("data-state", state).attr("title", lastRun ? when : "");
-    $badge.toggleClass("is-stale", !!stale);
   };
 
   const applyJobPayload = (res) => {
@@ -892,7 +904,7 @@
           .prop("disabled", true)
           .attr(
             "title",
-            "มีงานอื่นกำลังทำงานอยู่ — หยุดงานนั้นก่อนเริ่มงานใหม่",
+            i18n.otherJobRunning,
           );
       } else {
         $run.removeAttr("title");
@@ -1057,7 +1069,7 @@
   // later fresh start still skips completed items on its own, it just
   // rescans from the beginning to find them. Available while a run is
   // going as well as once it is stopped, so walking away from a run takes
-  // one click rather than "หยุด" and then "ยกเลิก".
+  // one click rather than "Stop" and then "Cancel".
   $(".isxs-tool .isxs-tool-cancel").on("click", (e) => {
     const $card = $(e.currentTarget).closest(".isxs-tool");
     const job = jobs[$card.data("tool")];
@@ -1072,7 +1084,7 @@
 
   /* ------------------------------------------------------------------
    * Reset all tools' UI + re-sync connection status and stats — used both
-   * by the manual "รีเซตทั้งหมดใน Tools" button and automatically after a
+   * by the manual "Reset all in Tools" button and automatically after a
    * settings change that switches the destination bucket, since a resume
    * cursor aimed at a bucket that is no longer configured is meaningless.
    * Server-side work is never touched; this only forgets "where we
@@ -1098,12 +1110,12 @@
    * seconds. Rendered in the viewer's own timezone (the server's ETA is a
    * duration, deliberately, so it can't disagree with the reader's clock).
    *
-   * A run that finishes past midnight gets the day spelled out — "เสร็จ
-   * ประมาณ 02:15" on its own would read as "in a few minutes" at 11pm.
+   * A run that finishes past midnight gets the day spelled out — "done
+   * around 02:15" on its own would read as "in a few minutes" at 11pm.
    */
   const formatFinishTime = (etaSeconds) => {
     const finish = new Date(Date.now() + etaSeconds * 1000);
-    const time = finish.toLocaleTimeString("th-TH", {
+    const time = finish.toLocaleTimeString(cfg.locale || undefined, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -1113,34 +1125,36 @@
     const dayDiff = Math.floor((finish - startOfToday) / 86400000);
 
     if (dayDiff === 0) {
-      return time + " น.";
+      return fmt(i18n.timeAt, time);
     }
     if (dayDiff === 1) {
-      return "พรุ่งนี้ " + time + " น.";
+      return fmt(i18n.tomorrowAt, time);
     }
-    return (
-      finish.toLocaleDateString("th-TH", { day: "numeric", month: "short" }) +
-      " " +
-      time +
-      " น."
+    return fmt(
+      i18n.dateAt,
+      finish.toLocaleDateString(cfg.locale || undefined, {
+        day: "numeric",
+        month: "short",
+      }),
+      time,
     );
   };
 
   const formatDuration = (ms) => {
     if (!isFinite(ms) || ms <= 0) {
-      return "0 วินาที";
+      return i18n.zeroSec;
     }
     const totalSec = Math.round(ms / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
     if (h > 0) {
-      return h + " ชม. " + m + " นาที";
+      return fmt(i18n.hrMin, h, m);
     }
     if (m > 0) {
-      return m + " นาที " + s + " วินาที";
+      return fmt(i18n.minSec, m, s);
     }
-    return s + " วินาที";
+    return fmt(i18n.sec, s);
   };
 
 
@@ -1203,37 +1217,35 @@
       if (stale > 0) {
         $syncSummary.append(
           $("<p class='isxs-sync-stale'>").text(
-            "พบ meta ค้าง " + stale.toLocaleString() + " รายการ",
+            fmt(i18n.staleFound, stale.toLocaleString()),
           ),
         );
       }
       if (dataLoss > 0) {
         $syncSummary.append(
           $("<p class='isxs-sync-stale'>").text(
-            "ในนั้น " +
-              dataLoss.toLocaleString() +
-              " รายการไฟล์หายทั้งสองที่ (ดู badge แดงในหน้าสื่อ)",
+            fmt(i18n.dataLossOf, dataLoss.toLocaleString()),
           ),
         );
       }
       if (partial > 0) {
         $syncSummary.append(
           $("<p class='isxs-sync-orphan'>").text(
-            "ขึ้นไม่ครบทุกขนาด " + partial.toLocaleString() + " รายการ",
+            fmt(i18n.partialFound, partial.toLocaleString()),
           ),
         );
       }
       if (orphan > 0) {
         $syncSummary.append(
           $("<p class='isxs-sync-orphan'>").text(
-            "object ไม่มี media ตรงกัน " + orphan.toLocaleString() + " ไฟล์",
+            fmt(i18n.orphanFound, orphan.toLocaleString()),
           ),
         );
       }
       if (outside > 0) {
         $syncSummary.append(
           $("<p class='isxs-sync-orphan'>").text(
-            "object นอก prefix " + outside.toLocaleString() + " ไฟล์ (ไม่แตะ)",
+            fmt(i18n.outsideFound, outside.toLocaleString()),
           ),
         );
       }
@@ -1255,10 +1267,10 @@
       } else {
         $syncApply.attr("hidden", true);
       }
-      $syncApply.text("ล้าง meta ค้าง (" + stale.toLocaleString() + ")");
+      $syncApply.text(fmt(i18n.clearStaleN, stale.toLocaleString()));
 
       if (orphan > 0) {
-        $syncOrphanRun.removeAttr("hidden").text("ลบ orphan objects (" + orphan.toLocaleString() + ")");
+        $syncOrphanRun.removeAttr("hidden").text(fmt(i18n.deleteOrphansN, orphan.toLocaleString()));
         $syncOrphanActions.removeAttr("hidden");
       } else {
         $syncOrphanRun.attr("hidden", true);
@@ -1270,14 +1282,14 @@
 
     const syncFinish = (ok, result, message) => {
       syncBusy = false;
-      $syncRun.prop("disabled", false).text("ซิงก์ให้ตรงกับ bucket");
+      $syncRun.prop("disabled", false).text(i18n.syncRun);
       $syncEta.text("");
       if (ok) {
         // The bar has done its job; leaving it on screen at 100% next to a
-        // "0 รายการ" counter just looked like the run was still going.
+        // "0 items" counter just looked like the run was still going.
         $syncProgress.attr("hidden", true);
         $syncFill.css("width", "100%");
-        $syncCount.text("0 รายการ");
+        $syncCount.text(fmt(i18n.items, 0));
         const clean = renderSyncResult(result || {});
         // The server just marked this scan as the new last-run — reflect
         // it (and its verdict) immediately instead of waiting for the next
@@ -1292,7 +1304,7 @@
           .find(".isxs-sync-status")
           .attr("data-state", "error")
           .find(".isxs-sync-status-text")
-          .text("ซิงก์ไม่สำเร็จ");
+          .text(i18n.syncFailed);
         if (message) {
           $syncErrors.removeAttr("hidden").append($("<li>").text(message));
         }
@@ -1307,21 +1319,21 @@
       const runId = syncRunId();
       $syncCard.data("syncRunId", runId);
 
-      $syncRun.prop("disabled", true).text("กำลังซิงก์…");
+      $syncRun.prop("disabled", true).text(i18n.syncing);
       $syncApply.attr("hidden", true);
       $syncResult.attr("hidden", true);
       $syncErrors.attr("hidden", true).empty();
-      // Neither the old verdict nor "ซิงก์ไม่สำเร็จ" from a previous
+      // Neither the old verdict nor "Sync failed" from a previous
       // attempt should stand while this run is still deciding.
       $syncCard
         .find(".isxs-sync-status")
         .attr("data-state", "unknown")
         .find(".isxs-sync-status-text")
-        .text("กำลังตรวจกับ bucket…");
-      $syncEta.text("กำลังซิงก์กับ bucket จริง…");
+        .text(i18n.syncChecking);
+      $syncEta.text(i18n.syncScanning);
       $syncProgress.removeAttr("hidden");
       $syncFill.css("width", "5%");
-      $syncCount.text("0 รายการ");
+      $syncCount.text(fmt(i18n.items, 0));
 
       // Each batch response reports only what THIS request processed —
       // accumulate for a running total across the whole scan.
@@ -1346,7 +1358,7 @@
               cfg.nonce = res.data.nonce;
             }
             scanProcessed += res.data.processed || 0;
-            $syncCount.text(scanProcessed.toLocaleString() + " รายการ");
+            $syncCount.text(fmt(i18n.items, scanProcessed.toLocaleString()));
             (res.data.errors || []).forEach((err) => {
               $syncErrors.removeAttr("hidden").append($("<li>").text(err));
             });
@@ -1370,7 +1382,7 @@
         return;
       }
       syncBusy = true;
-      $syncApply.prop("disabled", true).text("กำลังล้าง…");
+      $syncApply.prop("disabled", true).text(i18n.clearing);
 
       $.post(cfg.ajaxUrl, {
         action: "isxs_sync_apply",
@@ -1396,23 +1408,20 @@
           const cleaned = res.data.processed || 0;
           const dataLoss = res.data.data_loss || 0;
           const $msg = $("<p class='isxs-sync-stale'>").text(
-            "ล้าง meta ค้างเรียบร้อย " +
-              cleaned.toLocaleString() +
-              " รายการ — กด “เริ่ม Offload” เพื่ออัปโหลดขึ้นใหม่",
+            fmt(i18n.staleCleared, cleaned.toLocaleString()),
           );
           $syncSummary.empty().append($msg);
           if (dataLoss > 0) {
             $syncSummary.append(
               $("<p class='isxs-sync-stale'>").text(
-                dataLoss.toLocaleString() +
-                  " รายการไฟล์หายทั้งสองที่ (ดู badge แดงในหน้าสื่อ)",
+                fmt(i18n.dataLoss, dataLoss.toLocaleString()),
               ),
             );
           }
           $syncResult.removeAttr("hidden");
           $syncApply.attr("hidden", true);
           syncBusy = false;
-          $syncApply.prop("disabled", false).text("ล้าง meta ค้าง");
+          $syncApply.prop("disabled", false).text(i18n.clearStale);
         })
         .fail(() => {
           syncFinish(false, null, cfg.i18n.connectionLost);
@@ -1424,7 +1433,7 @@
     // references. Confirmed before starting, batched like the scan.
     const orphanFinishError = (message) => {
       syncBusy = false;
-      $syncOrphanRun.prop("disabled", false).text("ลบ orphan objects");
+      $syncOrphanRun.prop("disabled", false).text(i18n.deleteOrphans);
       syncFinish(false, null, message);
     };
 
@@ -1434,7 +1443,7 @@
       }
       if (
         !window.confirm(
-          "ลบ orphan objects ทั้งหมดออกจาก bucket?\n\nจะลบเฉพาะ object ใน prefix ปัจจุบันที่ไม่มี media ใน WordPress ตรงกันเท่านั้น — object นอก prefix (เช่นของเว็บอื่น/backup) จะไม่ถูกแตะ แต่ควรมี backup ก่อนเสมอ",
+          i18n.confirmOrphans,
         )
       ) {
         return;
@@ -1442,13 +1451,13 @@
       syncBusy = true;
       const runId = syncRunId();
 
-      $syncOrphanRun.prop("disabled", true).text("กำลังลบ…");
+      $syncOrphanRun.prop("disabled", true).text(i18n.deleting);
       $syncApply.attr("hidden", true);
       $syncErrors.attr("hidden", true).empty();
-      $syncEta.text("กำลังลิสต์และลบ orphan…");
+      $syncEta.text(i18n.orphanListing);
       $syncProgress.removeAttr("hidden");
       $syncFill.css("width", "5%");
-      $syncCount.text("0 รายการ");
+      $syncCount.text(fmt(i18n.items, 0));
 
       let orphanProcessed = 0;
       const step = () => {
@@ -1468,7 +1477,7 @@
               cfg.nonce = res.data.nonce;
             }
             orphanProcessed += res.data.processed || 0;
-            $syncCount.text(orphanProcessed.toLocaleString() + " รายการ");
+            $syncCount.text(fmt(i18n.items, orphanProcessed.toLocaleString()));
             (res.data.errors || []).forEach((err) => {
               $syncErrors.removeAttr("hidden").append($("<li>").text(err));
             });
@@ -1477,14 +1486,12 @@
               syncBusy = false;
               $syncFill.css("width", "100%");
               $syncEta.text("");
-              $syncOrphanRun.prop("disabled", false).text("ลบ orphan objects");
+              $syncOrphanRun.prop("disabled", false).text(i18n.deleteOrphans);
               $syncSummary
                 .empty()
                 .append(
                   $("<p class='isxs-sync-stale'>").text(
-                    "ลบ orphan objects เรียบร้อย " +
-                      deleted.toLocaleString() +
-                      " ไฟล์ — bucket สะอาดแล้ว",
+                    fmt(i18n.orphansDeleted, deleted.toLocaleString()),
                   ),
                 );
               $syncResult.removeAttr("hidden");
@@ -1508,7 +1515,7 @@
 
   /* ------------------------------------------------------------------
    * Offload Status widget (header) — dropdown toggle, refresh, quick
-   * offload; and the connection editor reveal (แก้ไข / ปิด buttons).
+   * offload; and the connection editor reveal (Edit / Close buttons).
    * ---------------------------------------------------------------- */
 
   const $statusWidget = $(".isxs-status-widget");
@@ -1613,7 +1620,7 @@
   applyStats(cfg.stats);
 
   // Captured once so a card can always be put back to its idle label —
-  // reading the button text later would pick up "ทำต่อ"/"กำลังทำงาน…"
+  // reading the button text later would pick up "Resume"/"Working…"
   // instead of the original.
   $toolCards.each((index, el) => {
     const $t = $(el);

@@ -6,7 +6,7 @@
  *
  * Until this existed, a run's cursor lived only in the browser
  * ($card.data('isxsResume') + localStorage): closing the tab, an expired
- * nonce or a second admin opening the page all lost it, so "หยุด" → "ทำต่อ"
+ * nonce or a second admin opening the page all lost it, so "Stop" → "Resume"
  * could silently restart from zero or skip work. The run itself also died
  * with the tab, because every batch was scheduled by JS.
  *
@@ -249,7 +249,7 @@ class ISXM_Job {
      * be forgotten — the healthcheck uses it to spot dead runs.
      *
      * A batch takes up to TIME_BUDGET seconds and the user can hit
-     * "หยุด"/"ยกเลิก" at any point during it, but that no longer touches
+     * "Stop"/"Cancel" at any point during it, but that no longer touches
      * this record — it writes a stop signal to a separate option, which the
      * runner reads between batches (see ISXM_Background::consume_signal).
      * So this write is free to record what the batch actually did without
@@ -348,7 +348,7 @@ class ISXM_Job {
     }
 
     /**
-     * Forget this tool's record entirely — the UI's "ยกเลิก" on a paused
+     * Forget this tool's record entirely — the UI's "Cancel" on a paused
      * card. Never touches the underlying work (the tools skip already-done
      * items on their own), only "where we stopped".
      */
@@ -453,7 +453,7 @@ class ISXM_Job {
     /**
      * How long a finished/cancelled record is kept. Long enough that the
      * result is still on screen when you come back to the tab, short enough
-     * that a card doesn't sit at "เสร็จสิ้น ✓" for days. Paused and errored
+     * that a card doesn't sit at "Done ✓" for days. Paused and errored
      * records are NEVER pruned — they hold a cursor someone may still want
      * to resume from.
      */

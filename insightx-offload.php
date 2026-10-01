@@ -2,11 +2,12 @@
 /**
  * Plugin Name: InsightX Offload
  * Plugin URI:  https://insightx.in.th/
- * Version:     0.2.6
+ * Version:     0.2.7
  * Author:      InsightX
  * Author URI:  https://www.insightx.in.th
  * Text Domain: insightx-offload
- * Description: Offload media ไปยัง S3-compatible storage (Minio, Amazon S3, Cloudflare R2, DigitalOcean Spaces) พร้อมระบบ URL rewrite, เปลี่ยน/ย้าย provider, Assets Pull (เสิร์ฟ CSS/JS ผ่าน CDN), bulk tools และ diagnostic — โดย InsightX
+ * Domain Path: /languages
+ * Description: Offload media to S3-compatible storage (Minio, Amazon S3, Cloudflare R2, DigitalOcean Spaces) with URL rewriting, provider switching/migration, Assets Pull (serve CSS/JS through a CDN), bulk tools and diagnostics — by InsightX
  * License:     GPLv3 or later
  *
  * Copyright (C) 2026 InsightX. Original work — not derived from any third-party plugin.
@@ -25,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'ISXM_PLUGIN_DIR', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'ISXM_PLUGIN_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
-define( 'ISXM_PLUGIN_VERSION', '0.2.6' );
+define( 'ISXM_PLUGIN_VERSION', '0.2.7' );
 
 /*
  * GitHub update checker.
@@ -47,6 +48,13 @@ $isxm_update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdat
     'insightx-offload'
 );
 $isxm_update_checker->getVcsApi()->enableReleaseAssets();
+
+// Not hosted on wordpress.org, so WP never fetches a language pack for this
+// plugin — load the bundled languages/*.mo ourselves. English is the source
+// language; any locale without a .mo falls back to it.
+add_action( 'init', function () {
+    load_plugin_textdomain( 'insightx-offload', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} );
 
 $isxm_files_to_load = [
     'includes/class-isxm-crypto.php',
@@ -141,7 +149,12 @@ add_action( 'plugins_loaded', function () {
     // deactivate instead.
     if ( defined( 'ISXS_PLUGIN_VERSION' ) || class_exists( 'ISXS_Offload' ) || class_exists( 'ISXS_Tools' ) ) {
         add_action( 'admin_notices', function () {
-            echo '<div class="notice notice-error"><p><strong>InsightX Offload:</strong> ตรวจพบว่า InsightX Storage ยังเปิดอยู่ — ทั้งสองปลั๊กอินใช้ข้อมูลชุดเดียวกัน (options / postmeta / ตาราง ledger) ห้ามรันพร้อมกัน กรุณา <strong>ปิด (Deactivate) InsightX Storage</strong> ก่อน แล้วเปิด InsightX Offload ใหม่ ข้อมูลทั้งหมดจะอ่านต่อได้ทันที ไม่ต้อง offload ใหม่</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static Thai copy, no user input
+            echo '<div class="notice notice-error"><p><strong>InsightX Offload:</strong> '
+                . wp_kses(
+                    __( 'InsightX Storage is still active — both plugins share the same data (options / postmeta / ledger table) and must never run together. Please <strong>deactivate InsightX Storage</strong> first, then re-activate InsightX Offload. All existing data is picked up immediately, nothing needs to be offloaded again.', 'insightx-offload' ),
+                    [ 'strong' => [] ]
+                )
+                . '</p></div>';
         } );
         return;
     }
@@ -182,6 +195,11 @@ add_action( 'plugins_loaded', function () {
     if ( class_exists( 'ISXM_Admin' ) )   new ISXM_Admin();
     if ( is_admin() && class_exists( 'ISXM_Media_Library' ) ) new ISXM_Media_Library();
     if ( class_exists( 'ISXM_Assets' ) )  new ISXM_Assets();
+    // Paid downloads are served as short-lived signed links, never as the
+    // plain bucket URL (see ISXM_WC_Downloads::presign_download_path()).
+    if ( class_exists( 'ISXM_WC_Downloads' ) ) {
+        add_filter( 'woocommerce_file_download_path', [ 'ISXM_WC_Downloads', 'presign_download_path' ], 20 );
+    }
 } );
 
 register_uninstall_hook( __FILE__, 'isxm_plugin_uninstall' );

@@ -84,7 +84,7 @@ class ISXM_Settings {
             'source_provider'        => 'custom',
             'source_prefix'          => 'wp-content/uploads/',
             'source_use_year_month'  => true,
-            'source_public_base_url' => '',        // URL ที่ media เดิมถูกเสิร์ฟอยู่จริงตอนนี้ (ที่ปรากฏใน DB) — เว้นว่างเพื่อเดาจาก source_endpoint/bucket
+            'source_public_base_url' => '',        // URL the existing media is actually served from now (as found in the DB) — empty = infer from source_endpoint/bucket
         ];
     }
 
@@ -199,12 +199,12 @@ class ISXM_Settings {
      */
     public static function type_folder_fields() {
         return [
-            'product_folder'   => [ 'label' => 'โฟลเดอร์สินค้า (รูปภาพ)',     'default' => 'products' ],
-            'download_folder'  => [ 'label' => 'โฟลเดอร์ไฟล์ดาวน์โหลดสินค้า', 'default' => 'downloads' ],
-            'post_folder'      => [ 'label' => 'โฟลเดอร์บทความ',              'default' => 'posts' ],
-            'promotion_folder' => [ 'label' => 'โฟลเดอร์โปรโมชั่น',            'default' => 'promotions' ],
-            'category_folder'  => [ 'label' => 'โฟลเดอร์หมวดหมู่สินค้า',       'default' => 'categories' ],
-            'brand_folder'     => [ 'label' => 'โฟลเดอร์แบรนด์',              'default' => 'brands' ],
+            'product_folder'   => [ 'label' => __( 'Products folder (images)', 'insightx-offload' ),     'default' => 'products' ],
+            'download_folder'  => [ 'label' => __( 'Product downloads folder', 'insightx-offload' ), 'default' => 'downloads' ],
+            'post_folder'      => [ 'label' => __( 'Posts folder', 'insightx-offload' ),              'default' => 'posts' ],
+            'promotion_folder' => [ 'label' => __( 'Promotions folder', 'insightx-offload' ),            'default' => 'promotions' ],
+            'category_folder'  => [ 'label' => __( 'Product categories folder', 'insightx-offload' ),       'default' => 'categories' ],
+            'brand_folder'     => [ 'label' => __( 'Brands folder', 'insightx-offload' ),              'default' => 'brands' ],
         ];
     }
 
@@ -367,7 +367,7 @@ class ISXM_Settings {
      */
     public static function public_base_url() {
         $s      = self::all();
-        $scheme = $s['force_https'] ? 'https' : ( is_ssl() ? 'https' : 'http' );
+        $scheme = $s['force_https'] ? 'https' : self::site_scheme();
 
         if ( $s['cdn_domain'] !== '' ) {
             $domain = preg_replace( '#^https?://#', '', untrailingslashit( $s['cdn_domain'] ) );
@@ -410,6 +410,21 @@ class ISXM_Settings {
      * @param array $info The `_isxs_offload` meta array.
      * @return string Base URL, no trailing slash.
      */
+    /**
+     * The site's own scheme, from the stored Site Address.
+     *
+     * Not is_ssl() (and not home_url(), which follows is_ssl() too): these
+     * URLs get written into the database, and is_ssl() depends on how the
+     * current request arrived — always false in WP-CLI, often false for cron
+     * and loopbacks — so the same file ended up http:// or https://
+     * depending on which of them happened to run the rewrite.
+     *
+     * @return string 'https' or 'http'
+     */
+    private static function site_scheme() {
+        return wp_parse_url( (string) get_option( 'home' ), PHP_URL_SCHEME ) === 'https' ? 'https' : 'http';
+    }
+
     public static function public_base_url_for( array $info ) {
         $s        = self::all();
         $bucket   = isset( $info['bucket'] ) ? (string) $info['bucket'] : '';
@@ -422,7 +437,7 @@ class ISXM_Settings {
             return self::public_base_url();
         }
 
-        $scheme = ( strpos( $endpoint, 'http://' ) === 0 ) ? 'http' : ( $s['force_https'] ? 'https' : ( is_ssl() ? 'https' : 'http' ) );
+        $scheme = ( strpos( $endpoint, 'http://' ) === 0 ) ? 'http' : ( $s['force_https'] ? 'https' : self::site_scheme() );
         $host   = preg_replace( '#^https?://#', '', untrailingslashit( $endpoint ) );
 
         return ! empty( $info['path_style'] )

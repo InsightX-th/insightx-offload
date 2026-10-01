@@ -3,7 +3,7 @@
  * Copyright (C) 2026 InsightX. GPLv3 or later. Original work by InsightX.
  *
  * ISXM_CLI_Connection — WP-CLI commands for managing InsightX Storage
- * provider connections (the same data the "การเชื่อมต่อ" admin tab edits).
+ * provider connections (the same data the "Connections" admin tab edits).
  *
  *     wp isxm connection list
  *     wp isxm connection get <provider>
@@ -138,7 +138,7 @@ class ISXM_CLI_Connection {
 
     /**
      * Test a provider's currently stored connection (same check the
-     * Connections tab's "บันทึก" button runs, without changing any fields).
+     * Connections tab's "Save" button runs, without changing any fields).
      *
      * ## OPTIONS
      *
@@ -164,7 +164,7 @@ class ISXM_CLI_Connection {
             WP_CLI::error( $result->get_error_message() );
         }
 
-        ISXM_Connections::save_status( $slug, 'ok', 'เชื่อมต่อ bucket สำเร็จ' );
+        ISXM_Connections::save_status( $slug, 'ok', __( 'Connected to the bucket successfully', 'insightx-offload' ) );
         WP_CLI::success( 'Connected successfully.' );
     }
 

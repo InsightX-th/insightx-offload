@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.6
+Stable tag: 0.2.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,15 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.7 =
+* ความปลอดภัย: ไฟล์ขายของ WooCommerce/EDD ไม่ถูก offload ขึ้น bucket ที่เปิดอ่านได้อีก และลูกค้าดาวน์โหลดผ่านลิงก์
+  presigned อายุ 5 นาที, กัน PHP object injection, endpoint รับเฉพาะ http/https, validate ชื่อ bucket
+* แก้ไฟล์หาย: "Remove from Bucket" ไม่ลบขนาดรูปที่ยังไม่ได้ดาวน์โหลดกลับ, Migrate ไม่ข้ามไฟล์ที่ยังไม่ได้ย้าย,
+  "ลบ orphan objects" ไม่ทำงานเมื่อไม่ตั้ง prefix และไม่ลบไฟล์ใหม่
+* ค่า serialize ซ้อน 2 ชั้นไม่เสีย, URL ใช้ scheme ของ Site Address เสมอ, token ของ loopback ไม่เปลี่ยนตาม http/https
+* รองรับ 2 ภาษา (อังกฤษ/ไทยตามภาษาของ WordPress) และเพิ่ม CHANGELOG.md
+* เพิ่มชุดทดสอบอัตโนมัติ 181 เทสต์ + แก้ CI ที่ไม่เคย fail — รายละเอียดทั้งหมดใน CHANGELOG.md
 
 = 0.2.6 =
 * เพิ่มตัวเลือก "ไม่สร้างรูปขนาดย่อ" — ปิดการสร้าง thumbnail/medium/large/1536/2048 ของ

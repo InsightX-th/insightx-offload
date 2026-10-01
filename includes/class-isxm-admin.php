@@ -67,41 +67,95 @@ class ISXM_Admin {
             // slug => inline SVG brand marks, so the JS picker dropdown can
             // render provider logos without duplicating the SVG source.
             'providerLogos' => $this->provider_logo_map(),
+            // BCP 47 tag for the date/time formatting in admin.js.
+            'locale'     => str_replace( '_', '-', get_user_locale() ),
             'i18n'       => [
-                'saving'        => 'กำลังบันทึก…',
-                'saved'         => 'บันทึกแล้ว ✓',
-                'save'          => 'บันทึกการตั้งค่า',
-                'connSave'      => 'บันทึก',
-                'testing'       => 'กำลังทดสอบ…',
-                'confirmRemove' => "ลบไฟล์ทั้งหมดออกจาก bucket?\n\nระบบจะดาวน์โหลดไฟล์ที่ไม่มีบนเซิร์ฟเวอร์กลับมาก่อนลบ แต่ควรมี backup ไว้ก่อนเสมอ",
-                'working'       => 'กำลังทำงาน…',
-                'done'          => 'เสร็จสิ้น ✓',
-                'error'         => 'เกิดข้อผิดพลาด',
-                'stop'          => 'หยุด',
-                'stopping'      => 'กำลังหยุด…',
-                'stopped'       => 'หยุดแล้ว',
-                'cancel'        => 'ยกเลิก',
-                'cancelling'    => 'กำลังยกเลิก…',
+                'saving'        => __( 'Saving…', 'insightx-offload' ),
+                'saved'         => __( 'Saved ✓', 'insightx-offload' ),
+                'save'          => __( 'Save Settings', 'insightx-offload' ),
+                'connSave'      => __( 'Save', 'insightx-offload' ),
+                'testing'       => __( 'Testing…', 'insightx-offload' ),
+                'confirmRemove' => __( "Remove all files from the bucket?\n\nFiles missing from the server will be downloaded back before removal, but always keep a backup first", 'insightx-offload' ),
+                'working'       => __( 'Working…', 'insightx-offload' ),
+                'done'          => __( 'Done ✓', 'insightx-offload' ),
+                'error'         => __( 'An error occurred', 'insightx-offload' ),
+                'stop'          => __( 'Stop', 'insightx-offload' ),
+                'stopping'      => __( 'Stopping…', 'insightx-offload' ),
+                'stopped'       => __( 'Stopped', 'insightx-offload' ),
+                'cancel'        => __( 'Cancel', 'insightx-offload' ),
+                'cancelling'    => __( 'Cancelling…', 'insightx-offload' ),
                 // Cancel throws the resume cursor away, so it asks first —
-                // "หยุด" is the one that is always safe.
-                'confirmCancel' => "ยกเลิกงานนี้?\n\nงานที่ทำไปแล้วยังอยู่ครบ แต่จุดที่ค้างไว้จะถูกลบ — เริ่มใหม่ครั้งหน้าจะไล่หาตั้งแต่ต้น",
+                // "Stop" is the one that is always safe.
+                'confirmCancel' => __( "Cancel this job?\n\nWork already done stays intact, but the saved checkpoint is deleted — the next run will scan from the beginning", 'insightx-offload' ),
                 // A run whose driver went quiet (loopback killed, PHP fatal,
                 // server restart). Nothing is lost — the cursor is in the
                 // database and the healthcheck picks it back up.
-                'stalled'       => 'สะดุด — กำลังเริ่มทำต่อให้อัตโนมัติ',
-                'resume'        => 'ทำต่อ',
-                'connecting'    => 'กำลังเชื่อมต่อ…',
-                'retrying'      => 'การเชื่อมต่อสะดุด — กำลังลองใหม่',
-                'connectionLost' => 'การเชื่อมต่อขาดหลายครั้งติดกัน — หยุดไว้ตรงนี้ งานที่ทำไปแล้วถูกบันทึกครบ กด "ทำต่อ" เพื่อไปต่อจากจุดเดิม',
+                'stalled'       => __( 'Stalled — resuming automatically', 'insightx-offload' ),
+                'resume'        => __( 'Resume', 'insightx-offload' ),
+                'connecting'    => __( 'Connecting…', 'insightx-offload' ),
+                'retrying'      => __( 'Connection hiccup — retrying', 'insightx-offload' ),
+                'connectionLost' => __( 'The connection dropped several times in a row — paused here. All work so far is saved; click "Resume" to continue from the same point', 'insightx-offload' ),
                 // Bulk tools now run server-side; these cover the states
                 // only the job records can be in.
-                'counting'      => 'กำลังนับไฟล์ใน source bucket…',
+                'counting'      => __( 'Counting files in the source bucket…', 'insightx-offload' ),
                 // The final one-pass DB URL rewrite at the end of an offload
                 // run — uploads are all done, the bar sits near 100% while
                 // this phase rewrites stored URLs table by table.
-                'rewriting'     => 'กำลังเขียน URL ลงฐานข้อมูล…',
-                'keepTabOpen'   => 'เว็บนี้เรียกตัวเองไม่ได้ — เปิดหน้านี้ทิ้งไว้จนกว่างานจะเสร็จ',
-                'sessionExpired' => 'เซสชันหมดอายุหรือถูก logout — refresh หน้านี้แล้วลองใหม่ (งานที่ทำไปแล้วถูกบันทึกครบ)',
+                'rewriting'     => __( 'Writing URLs to the database…', 'insightx-offload' ),
+                'keepTabOpen'   => __( 'This site cannot call itself — keep this page open until the job finishes', 'insightx-offload' ),
+                'sessionExpired' => __( 'Session expired or logged out — refresh this page and try again (all work so far is saved)', 'insightx-offload' ),
+                'connNotConfigured' => __( 'This provider is not configured yet — set it up in the “Connections” tab', 'insightx-offload' ),
+                'connOk'            => __( 'Connected successfully', 'insightx-offload' ),
+                'connFailed'        => __( 'Connection failed', 'insightx-offload' ),
+                'connUntested'      => __( 'Connection not tested yet', 'insightx-offload' ),
+                'noBucket'          => __( '%s · (no bucket set)', 'insightx-offload' ),
+                'sampleProduct'     => __( 'product-name', 'insightx-offload' ),
+                'sampleTheme'       => __( 'theme-name', 'insightx-offload' ),
+                'items'             => __( '%s items', 'insightx-offload' ),
+                'elapsedParen'      => __( '%1$s (elapsed %2$s)', 'insightx-offload' ),
+                'elapsed'           => __( 'Elapsed %s', 'insightx-offload' ),
+                'eta'               => __( 'About %1$s left · done around %2$s', 'insightx-offload' ),
+                'doneIn'            => __( 'Done — took %s in total', 'insightx-offload' ),
+                'pausedAfter'       => __( 'Paused — %s elapsed', 'insightx-offload' ),
+                'cancelledAfter'    => __( 'Cancelled — after %s', 'insightx-offload' ),
+                'andMore'           => __( '…and %s more', 'insightx-offload' ),
+                'failedCount'       => __( '%s failed — ', 'insightx-offload' ),
+                'viewInMedia'       => __( 'View them on the Media page', 'insightx-offload' ),
+                'checkedToday'      => __( 'Last checked today', 'insightx-offload' ),
+                'checkedDaysAgo'    => __( 'Last checked %s days ago', 'insightx-offload' ),
+                'neverChecked'      => __( 'Never checked against the real bucket', 'insightx-offload' ),
+                'allMatch'          => __( 'Everything matches', 'insightx-offload' ),
+                'mismatch'          => __( 'Mismatches found', 'insightx-offload' ),
+                'staleCheck'        => __( ' — a while ago, check again', 'insightx-offload' ),
+                'otherJobRunning'   => __( 'Another job is running — stop it before starting a new one', 'insightx-offload' ),
+                'timeAt'            => __( '%s', 'insightx-offload' ),
+                'tomorrowAt'        => __( 'tomorrow %s', 'insightx-offload' ),
+                'dateAt'            => __( '%1$s %2$s', 'insightx-offload' ),
+                'zeroSec'           => __( '0 sec', 'insightx-offload' ),
+                'hrMin'             => __( '%1$s hr %2$s min', 'insightx-offload' ),
+                'minSec'            => __( '%1$s min %2$s sec', 'insightx-offload' ),
+                'sec'               => __( '%s sec', 'insightx-offload' ),
+                'staleFound'        => __( '%s items with stale meta', 'insightx-offload' ),
+                'dataLossOf'        => __( 'of which %s are missing everywhere (see the red badge on the Media page)', 'insightx-offload' ),
+                'dataLoss'          => __( '%s items missing everywhere (see the red badge on the Media page)', 'insightx-offload' ),
+                'partialFound'      => __( '%s items with missing sizes', 'insightx-offload' ),
+                'orphanFound'       => __( '%s objects with no matching media', 'insightx-offload' ),
+                'outsideFound'      => __( '%s objects outside the prefix (left alone)', 'insightx-offload' ),
+                'clearStaleN'       => __( 'Clear stale meta (%s)', 'insightx-offload' ),
+                'clearStale'        => __( 'Clear stale meta', 'insightx-offload' ),
+                'deleteOrphansN'    => __( 'Delete orphan objects (%s)', 'insightx-offload' ),
+                'deleteOrphans'     => __( 'Delete orphan objects', 'insightx-offload' ),
+                'syncRun'           => __( 'Sync with bucket', 'insightx-offload' ),
+                'syncFailed'        => __( 'Sync failed', 'insightx-offload' ),
+                'syncing'           => __( 'Syncing…', 'insightx-offload' ),
+                'syncChecking'      => __( 'Checking against the bucket…', 'insightx-offload' ),
+                'syncScanning'      => __( 'Syncing with the real bucket…', 'insightx-offload' ),
+                'clearing'          => __( 'Clearing…', 'insightx-offload' ),
+                'staleCleared'      => __( 'Cleared stale meta for %s items — click “Start Offload” to upload them again', 'insightx-offload' ),
+                'confirmOrphans'    => __( "Delete all orphan objects from the bucket?\n\nEvery object under the current prefix that no media on THIS site uses will be deleted — including files another site keeps under the same prefix in this bucket (e.g. a staging copy). Objects outside the prefix are left alone. Always keep a backup first", 'insightx-offload' ),
+                'deleting'          => __( 'Deleting…', 'insightx-offload' ),
+                'orphanListing'     => __( 'Listing and deleting orphans…', 'insightx-offload' ),
+                'orphansDeleted'    => __( 'Deleted %s orphan objects — the bucket is clean', 'insightx-offload' ),
             ],
         ] );
     }
@@ -122,16 +176,9 @@ class ISXM_Admin {
         $isxm_pst       = ISXM_Connections::status( $s['provider'] );
         $isxm_pok       = $isxm_pcfg && $isxm_pst['state'] === 'ok';
 
-        $isxm_storage_alert = '';
-        if ( ! $isxm_pok ) {
-            $isxm_storage_alert = $isxm_pcfg
-                ? ( $isxm_pst['message'] !== '' ? $isxm_pst['message'] : 'เชื่อมต่อ storage ไม่สำเร็จ' )
-                : 'ยังตั้งค่าการเชื่อมต่อไม่ครบ — media จะยังไม่ถูก offload ไปที่ storage ไปที่แท็บ “การเชื่อมต่อ” เพื่อกรอก Endpoint / Bucket / Access Key / Secret Key';
-        }
-
         $isxm_delivery_alert = '';
         if ( $s['deliver_enabled'] && ! $isxm_pok ) {
-            $isxm_delivery_alert = 'ไม่สามารถทดสอบการเสิร์ฟ media ได้จนกว่าจะเชื่อมต่อ storage สำเร็จ — ดูหัวข้อ "การตั้งค่าจัดเก็บไฟล์" ด้านซ้าย';
+            $isxm_delivery_alert = __( 'Media delivery cannot be tested until storage connects successfully — see the "File Storage Settings" section on the left', 'insightx-offload' );
         }
         ?>
         <div class="isxs-wrap" id="isxs-app">
@@ -144,7 +191,7 @@ class ISXM_Admin {
                         </div>
                         <div>
                             <h1><?php esc_html_e( 'InsightX Offload', 'insightx-offload' ); ?></h1>
-                            <p class="isxs-tagline">Offload media ไปยัง S3-compatible storage (Minio · S3 · R2 · Spaces) + ย้าย provider</p>
+                            <p class="isxs-tagline"><?php esc_html_e( 'Offload media to S3-compatible storage (Minio · S3 · R2 · Spaces) + provider migration', 'insightx-offload' ); ?></p>
                         </div>
                     </div>
 
@@ -156,15 +203,15 @@ class ISXM_Admin {
                         </button>
                         <div class="isxs-status-panel" id="isxs-status-panel" hidden>
                             <div class="isxs-status-panel-head">
-                                <strong>สถานะ Offload</strong>
+                                <strong><?php esc_html_e( 'Offload Status', 'insightx-offload' ); ?></strong>
                                 <button type="button" class="isxs-status-refresh">
                                     <svg class="isxs-status-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-                                    รีเฟรช
+                                    <?php esc_html_e( 'Refresh', 'insightx-offload' ); ?>
                                 </button>
                             </div>
                             <table class="isxs-status-table">
                                 <thead>
-                                    <tr><th>แหล่งที่มา</th><th>Offloaded</th><th>เหลือ</th></tr>
+                                    <tr><th><?php esc_html_e( 'Source', 'insightx-offload' ); ?></th><th><?php esc_html_e( 'Offloaded', 'insightx-offload' ); ?></th><th><?php esc_html_e( 'Remaining', 'insightx-offload' ); ?></th></tr>
                                 </thead>
                                 <tbody>
                                     <tr>
@@ -175,20 +222,20 @@ class ISXM_Admin {
                                 </tbody>
                             </table>
                             <div class="isxs-status-action">
-                                <button type="button" class="isxs-btn isxs-btn-primary isxs-status-offload-btn">Offload Remaining <span id="isxs-status-remaining-num">0</span> รายการ</button>
+                                <button type="button" class="isxs-btn isxs-btn-primary isxs-status-offload-btn"><?php printf( esc_html__( 'Offload Remaining %s items', 'insightx-offload' ), '<span id="isxs-status-remaining-num">0</span>' ); ?></button>
                             </div>
-                            <div class="isxs-status-foot">รวม <span id="isxs-status-total">0</span> รายการ · ขึ้น bucket แล้ว <span id="isxs-status-onbucket">0</span></div>
+                            <div class="isxs-status-foot"><?php printf( esc_html__( 'Total %1$s items · %2$s on the bucket', 'insightx-offload' ), '<span id="isxs-status-total">0</span>', '<span id="isxs-status-onbucket">0</span>' ); ?></div>
                         </div>
                     </div>
                 </div>
 
                 <nav class="isxs-nav" role="tablist">
-                    <button type="button" class="isxs-nav-item is-active" data-tab="media" role="tab">สื่อ</button>
-                    <button type="button" class="isxs-nav-item" data-tab="assets" role="tab">ทรัพยากร</button>
-                    <button type="button" class="isxs-nav-item" data-tab="tools" role="tab">เครื่องมือ</button>
-                    <button type="button" class="isxs-nav-item" data-tab="migrate" role="tab">ย้ายข้อมูล</button>
-                    <button type="button" class="isxs-nav-item" data-tab="connections" role="tab">การเชื่อมต่อ</button>
-                    <button type="button" class="isxs-nav-item" data-tab="support" role="tab">ช่วยเหลือ</button>
+                    <button type="button" class="isxs-nav-item is-active" data-tab="media" role="tab"><?php esc_html_e( 'Media', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-nav-item" data-tab="assets" role="tab"><?php esc_html_e( 'Assets', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-nav-item" data-tab="tools" role="tab"><?php esc_html_e( 'Tools', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-nav-item" data-tab="migrate" role="tab"><?php esc_html_e( 'Migrate', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-nav-item" data-tab="connections" role="tab"><?php esc_html_e( 'Connections', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-nav-item" data-tab="support" role="tab"><?php esc_html_e( 'Support', 'insightx-offload' ); ?></button>
                 </nav>
             </header>
 
@@ -205,7 +252,7 @@ class ISXM_Admin {
                                     <div class="isxs-card-head-title" id="isxs-storage-head-title">
                                         <span class="isxs-provider-icon is-logo" id="isxs-storage-head-logo"><?php echo $this->provider_logo_svg( $s['provider'] ); ?></span>
                                         <div>
-                                            <h2>การตั้งค่าจัดเก็บไฟล์</h2>
+                                            <h2><?php esc_html_e( 'File Storage Settings', 'insightx-offload' ); ?></h2>
                                             <p class="isxs-card-sub" id="isxs-storage-head-sub"><?php echo esc_html( $isxm_pmeta['label'] ); ?><?php echo $isxm_pconn['bucket'] !== '' ? ' · ' . esc_html( $isxm_pconn['bucket'] ) : ''; ?><?php echo $isxm_pconn['region'] !== '' ? ' · ' . esc_html( $isxm_pconn['region'] ) : ''; ?></p>
                                         </div>
                                     </div>
@@ -219,7 +266,7 @@ class ISXM_Admin {
                                                 </span>
                                                 <svg class="isxs-picker-caret" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4.5 6l3.5 3.5L11.5 6l1 1-4.5 4.5L3.5 7z"/></svg>
                                             </button>
-                                            <ul class="isxs-picker-menu" id="isxs-dest-provider-menu" role="listbox" aria-label="เลือก Storage Provider" hidden>
+                                            <ul class="isxs-picker-menu" id="isxs-dest-provider-menu" role="listbox" aria-label="<?php esc_attr_e( 'Choose a storage provider', 'insightx-offload' ); ?>" hidden>
                                                 <?php foreach ( $isxm_providers as $isxm_slug => $isxm_meta ) :
                                                     $isxm_sel_verified = ISXM_Connections::is_configured( $isxm_slug ) && ISXM_Connections::status( $isxm_slug )['state'] === 'ok';
                                                     ?>
@@ -233,20 +280,17 @@ class ISXM_Admin {
                                         </div>
                                     </div>
                                 </div>
-                                <?php if ( $isxm_storage_alert !== '' ) : ?>
-                                    <div class="isxs-alert isxs-alert-error isxs-storage-alert"><?php echo esc_html( $isxm_storage_alert ); ?></div>
-                                <?php endif; ?>
                                 <div class="isxs-card-body">
-                                    <?php $this->toggle( 'offload_enabled', $s['offload_enabled'], 'Offload Media', 'คัดลอกไฟล์ media ขึ้น storage อัตโนมัติหลังอัปโหลด' ); ?>
-                                    <?php $this->toggle( 'remove_local', $s['remove_local'], 'Remove Local Media', 'ลบไฟล์บนเซิร์ฟเวอร์หลัง offload สำเร็จ เพื่อประหยัดพื้นที่ (ระวัง: ปลั๊กอินแก้รูปบางตัวต้องใช้ไฟล์ local)', 'warn' ); ?>
-                                    <?php $this->toggle( 'disable_thumbnails', $s['disable_thumbnails'], 'ไม่สร้างรูปขนาดย่อ', 'ให้ WordPress หยุดสร้างขนาดย่อทั้งหมด (thumbnail / medium / large / 1536 / 2048 รวมถึงขนาดของ WooCommerce และธีม) อัปโหลดหนึ่งครั้งได้ไฟล์เดียวบน bucket และเก็บไฟล์ต้นฉบับไว้ตามเดิมโดยไม่ย่อเป็น -scaled — ระวัง: srcset จะหายและทุกจุดที่ขอรูปเล็กจะได้ไฟล์เต็ม เหมาะกับเว็บที่ดึงรูปแบบ headless แล้วไปย่อเอง มีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น', 'warn' ); ?>
-                                    <?php $this->toggle( 'persist_urls', $s['persist_urls'], 'เขียน URL ถาวรลงฐานข้อมูล', 'เขียน URL ใหม่ (remote) ลงใน post_content / postmeta / options / guid โดยตรงหลัง offload — Bulk Offload เขียนแบบหนึ่ง-pass ตอนท้ายงาน (สแกนแต่ละตารางครั้งเดียว) ไม่สแกนทั้งตารางทุก batch (URL ยังถูก rewrite ตอนแสดงผลอยู่ดีถ้าเปิด “Deliver Offloaded Media”)' ); ?>
-                                    <?php $this->toggle( 'use_prefix', $s['use_prefix'], 'Add Prefix to Bucket Path', 'จัดกลุ่มไฟล์ของเว็บนี้ด้วย prefix ใน bucket' ); ?>
+                                    <?php $this->toggle( 'offload_enabled', $s['offload_enabled'], 'Offload Media', __( 'Copy media files to storage automatically after upload', 'insightx-offload' ) ); ?>
+                                    <?php $this->toggle( 'remove_local', $s['remove_local'], 'Remove Local Media', __( 'Delete files from the server after a successful offload to save space (caution: some image-editing plugins need the local file)', 'insightx-offload' ), 'warn' ); ?>
+                                    <?php $this->toggle( 'disable_thumbnails', $s['disable_thumbnails'], __( 'Disable intermediate image sizes', 'insightx-offload' ), __( 'Stop WordPress from generating any intermediate sizes (thumbnail / medium / large / 1536 / 2048, including WooCommerce and theme sizes). Each upload becomes a single file in the bucket and the original is kept as-is without a -scaled copy — caution: srcset goes away and every request for a small image gets the full file. Suited to headless sites that resize images themselves. Only affects newly uploaded files', 'insightx-offload' ), 'warn' ); ?>
+                                    <?php $this->toggle( 'persist_urls', $s['persist_urls'], __( 'Write permanent URLs to the database', 'insightx-offload' ), __( 'Write the new (remote) URLs directly into post_content / postmeta / options / guid after offloading — Bulk Offload writes them in a single pass at the end of the job (scanning each table once) instead of scanning every table on every batch (URLs are still rewritten at render time if “Deliver Offloaded Media” is on)', 'insightx-offload' ) ); ?>
+                                    <?php $this->toggle( 'use_prefix', $s['use_prefix'], 'Add Prefix to Bucket Path', __( 'Group this site\'s files under a prefix in the bucket', 'insightx-offload' ) ); ?>
                                     <div class="isxs-field isxs-indent" id="isxs-prefix-field">
                                         <input type="text" id="isxs-prefix" value="<?php echo esc_attr( $s['prefix'] ); ?>" placeholder="wp-content/uploads/">
                                     </div>
-                                    <?php $this->toggle( 'use_year_month', $s['use_year_month'], 'Add Year & Month to Bucket Path', 'ใส่ปี/เดือนที่อัปโหลดใน path เพื่อจัดระเบียบอีกชั้น' ); ?>
-                                    <?php $this->toggle( 'use_object_version', $s['use_object_version'], 'Add Object Version to Bucket Path', 'ใส่เลข version ใน path เพื่อให้ CDN เสิร์ฟไฟล์เวอร์ชันล่าสุดเสมอ' ); ?>
+                                    <?php $this->toggle( 'use_year_month', $s['use_year_month'], 'Add Year & Month to Bucket Path', __( 'Add the upload year/month to the path for extra organization', 'insightx-offload' ) ); ?>
+                                    <?php $this->toggle( 'use_object_version', $s['use_object_version'], 'Add Object Version to Bucket Path', __( 'Add a version number to the path so the CDN always serves the latest file', 'insightx-offload' ) ); ?>
                                 </div>
                             </div>
 
@@ -255,13 +299,13 @@ class ISXM_Admin {
                                 <div class="isxs-card-head">
                                     <div class="isxs-card-head-title">
                                         <div>
-                                            <h2>โครงสร้างโฟลเดอร์</h2>
-                                            <p class="isxs-card-sub">จัดกลุ่มไฟล์บน bucket แยกตามประเภทเนื้อหา</p>
+                                            <h2><?php esc_html_e( 'Folder Structure', 'insightx-offload' ); ?></h2>
+                                            <p class="isxs-card-sub"><?php esc_html_e( 'Group files in the bucket by content type', 'insightx-offload' ); ?></p>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="isxs-card-body">
-                                    <?php $this->toggle( 'use_type_folder', $s['use_type_folder'], 'แยกโฟลเดอร์ตามประเภทเนื้อหา', 'ชื่อโฟลเดอร์บน bucket แยกตามประเภทเนื้อหา — เปลี่ยนแล้วมีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น ไฟล์เก่าที่อัปโหลดไปแล้วยังอยู่ path เดิม' ); ?>
+                                    <?php $this->toggle( 'use_type_folder', $s['use_type_folder'], __( 'Folders by content type', 'insightx-offload' ), __( 'Bucket folder names per content type — changes only affect newly uploaded files; files already uploaded keep their old path', 'insightx-offload' ) ); ?>
                                     <div class="isxs-grid-2 isxs-indent" id="isxs-typefolder-fields">
                                         <?php foreach ( ISXM_Settings::type_folder_fields() as $isxm_folder_key => $isxm_folder_meta ) :
                                             $isxm_folder_id = 'isxs-' . str_replace( '_', '-', $isxm_folder_key );
@@ -272,9 +316,9 @@ class ISXM_Admin {
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
-                                    <p class="isxs-hint isxs-indent">เปิดแล้วไฟล์ที่เข้าเงื่อนไขจะข้าม Year &amp; Month กับ Object Version อัตโนมัติ ได้ path สั้นแบบ <code>products/ชื่อสินค้า/ไฟล์.jpg</code> — ปิด Prefix ในการ์ด “การตั้งค่าจัดเก็บไฟล์” ด้วยถ้าอยากได้สั้นที่สุด</p>
-                                    <p class="isxs-hint isxs-indent">ไฟล์ที่ระบุประเภทไม่ได้ (ไม่ได้ผูกกับสินค้า/บทความ/หมวดหมู่) ยังใช้ Year &amp; Month และ Object Version ตามเดิม</p>
-                                    <p class="isxs-hint isxs-indent">ข้อควรระวัง: พอตัด Year &amp; Month กับ Object Version ออก ไฟล์คนละตัวที่ชื่อซ้ำกันใต้สินค้าเดียวกันจะทับกันบน bucket ได้</p>
+                                    <p class="isxs-hint isxs-indent"><?php echo wp_kses( __( 'When on, matching files skip Year & Month and Object Version automatically, giving short paths like <code>products/product-name/file.jpg</code> — also turn off Prefix in the “File Storage Settings” card for the shortest paths', 'insightx-offload' ), [ 'code' => [] ] ); ?></p>
+                                    <p class="isxs-hint isxs-indent"><?php esc_html_e( 'Files whose type cannot be determined (not attached to a product/post/category) still use Year & Month and Object Version as before', 'insightx-offload' ); ?></p>
+                                    <p class="isxs-hint isxs-indent"><?php esc_html_e( 'Caution: without Year & Month and Object Version, different files with the same name under the same product can overwrite each other in the bucket', 'insightx-offload' ); ?></p>
                                 </div>
                             </div>
 
@@ -284,8 +328,8 @@ class ISXM_Admin {
                                     <div class="isxs-card-head-title" id="isxs-delivery-head-title">
                                         <span class="isxs-provider-icon is-logo" id="isxs-delivery-head-logo"><?php echo $this->provider_logo_svg( $s['provider'] ); ?></span>
                                         <div>
-                                            <h2>การเสิร์ฟไฟล์ (Delivery)</h2>
-                                            <p class="isxs-card-sub" id="isxs-delivery-head-sub"><?php echo esc_html( $isxm_pmeta['label'] ); ?> · <?php echo esc_html( $isxm_pconn['bucket'] !== '' ? $isxm_pconn['bucket'] : '(ยังไม่ตั้ง bucket)' ); ?></p>
+                                            <h2><?php esc_html_e( 'Delivery', 'insightx-offload' ); ?></h2>
+                                            <p class="isxs-card-sub" id="isxs-delivery-head-sub"><?php echo esc_html( $isxm_pmeta['label'] ); ?> · <?php echo esc_html( $isxm_pconn['bucket'] !== '' ? $isxm_pconn['bucket'] : __( '(no bucket set)', 'insightx-offload' ) ); ?></p>
                                         </div>
                                     </div>
                                 </div>
@@ -293,12 +337,12 @@ class ISXM_Admin {
                                     <div class="isxs-alert isxs-alert-warn isxs-delivery-alert"><?php echo esc_html( $isxm_delivery_alert ); ?></div>
                                 <?php endif; ?>
                                 <div class="isxs-card-body">
-                                    <?php $this->toggle( 'deliver_enabled', $s['deliver_enabled'], 'Deliver Offloaded Media', 'rewrite URL ของ media ที่ offload แล้วให้ชี้ไปที่ storage/CDN' ); ?>
-                                    <?php $this->toggle( 'force_https', $s['force_https'], 'Force HTTPS', 'ใช้ https กับทุก URL ที่ rewrite เสมอ' ); ?>
+                                    <?php $this->toggle( 'deliver_enabled', $s['deliver_enabled'], 'Deliver Offloaded Media', __( 'Rewrite URLs of offloaded media to point at storage/CDN', 'insightx-offload' ) ); ?>
+                                    <?php $this->toggle( 'force_https', $s['force_https'], 'Force HTTPS', __( 'Always use https for every rewritten URL', 'insightx-offload' ) ); ?>
                                     <div class="isxs-field">
                                         <label for="isxs-cdn-domain">Custom Delivery Domain (CDN)</label>
                                         <input type="text" id="isxs-cdn-domain" placeholder="cdn.example.com" value="<?php echo esc_attr( $s['cdn_domain'] ); ?>">
-                                        <p class="isxs-hint">ถ้ามี CDN ชี้ที่ bucket อยู่แล้ว ใส่โดเมนที่นี่ — เว้นว่างเพื่อใช้ URL ของ bucket ตรงๆ</p>
+                                        <p class="isxs-hint"><?php esc_html_e( 'If a CDN already points at the bucket, enter its domain here — leave empty to use the bucket URL directly', 'insightx-offload' ); ?></p>
                                     </div>
                                 </div>
                             </div>
@@ -318,22 +362,19 @@ class ISXM_Admin {
                                     </span>
                                     <div>
                                         <h2>Assets Pull</h2>
-                                        <p class="isxs-card-sub">เสิร์ฟไฟล์ CSS / JS ของธีมและปลั๊กอินผ่าน CDN</p>
+                                        <p class="isxs-card-sub"><?php esc_html_e( 'Serve theme and plugin CSS / JS through a CDN', 'insightx-offload' ); ?></p>
                                     </div>
                                 </div>
                             </div>
-                            <?php if ( ! $s['assets_enabled'] ) : ?>
-                                <div class="isxs-alert isxs-alert-warn isxs-assets-alert">Asset ยังไม่ได้เสิร์ฟจาก CDN จนกว่าจะเปิด "Rewrite Asset URLs" — ตอนนี้ไฟล์ CSS/JS ยังเสิร์ฟจากเซิร์ฟเวอร์ของเว็บตามปกติ</div>
-                            <?php endif; ?>
                             <div class="isxs-card-body">
-                                <?php $this->toggle( 'assets_enabled', $s['assets_enabled'], 'Rewrite Asset URLs', 'เปลี่ยน URL ของไฟล์ asset ที่ enqueue (style/script) ของธีมและปลั๊กอินให้ชี้ไปที่โดเมน CDN' ); ?>
-                                <?php $this->toggle( 'assets_force_https', $s['assets_force_https'], 'Force HTTPS', 'ใช้ https กับทุก URL ของ asset ที่ rewrite เสมอ' ); ?>
+                                <?php $this->toggle( 'assets_enabled', $s['assets_enabled'], 'Rewrite Asset URLs', __( 'Rewrite URLs of enqueued theme and plugin assets (styles/scripts) to point at the CDN domain', 'insightx-offload' ) ); ?>
+                                <?php $this->toggle( 'assets_force_https', $s['assets_force_https'], 'Force HTTPS', __( 'Always use https for every rewritten asset URL', 'insightx-offload' ) ); ?>
                                 <div class="isxs-field">
                                     <label for="isxs-assets-cdn-domain">CDN Domain (Assets)</label>
                                     <input type="text" id="isxs-assets-cdn-domain" placeholder="cdn.example.com" value="<?php echo esc_attr( $s['assets_cdn_domain'] ); ?>">
-                                    <p class="isxs-hint">ต้องเป็น CDN ที่อยู่หน้าเว็บนี้ (เช่น CloudFront ชี้ origin ที่เว็บ) — ไฟล์ asset ไม่ได้อยู่ใน bucket หมายเหตุ: font/รูปที่อ้างอิงภายในไฟล์ CSS จะยังเสิร์ฟจากเซิร์ฟเวอร์ตามปกติ</p>
+                                    <p class="isxs-hint"><?php esc_html_e( 'Must be a CDN in front of this site (e.g. CloudFront with this site as origin) — asset files are not in the bucket. Note: fonts/images referenced inside CSS files are still served from the server as usual', 'insightx-offload' ); ?></p>
                                 </div>
-                                <p class="isxs-hint">ตัวอย่าง URL ของ asset หลัง rewrite (อัปเดตสด):</p>
+                                <p class="isxs-hint"><?php esc_html_e( 'Sample asset URLs after rewrite (live preview):', 'insightx-offload' ); ?></p>
                                 <div class="isxs-url-preview" data-url-preview="assets">
                                     <span class="isxs-url-part" data-part="ascheme"><em>Scheme</em><code>https://</code></span>
                                     <span class="isxs-url-part" data-part="adomain"><em>Domain</em><code>—</code></span>
@@ -351,9 +392,9 @@ class ISXM_Admin {
                             $this->sync_card();
                             $this->tool_card(
                                 'offload',
-                                'Offload media ที่เหลือ',
-                                'อัปโหลด media ทั้งหมดที่ยังไม่ได้ offload ขึ้น bucket ทีละชุด — งานทำงานฝั่งเซิร์ฟเวอร์ ปิดแท็บได้ กลับมากด "ทำต่อ" ได้จากจุดเดิม (ถ้าไฟล์ถูกลบออกจาก bucket นอกปลั๊กอิน ให้ใช้เครื่องมือ Sync ตรวจก่อน)',
-                                'เริ่ม Offload',
+                                __( 'Offload remaining media', 'insightx-offload' ),
+                                __( 'Upload every media item not yet offloaded to the bucket in batches — the job runs server-side, so you can close the tab and click "Resume" later to continue from the same point (if files were deleted from the bucket outside the plugin, run the Sync tool first)', 'insightx-offload' ),
+                                __( 'Start Offload', 'insightx-offload' ),
                                 '',
                                 false
                             );
@@ -362,16 +403,16 @@ class ISXM_Admin {
                             // the card is also toggled live from JS after a run.
                             $this->tool_card(
                                 'retry_failed',
-                                'ลองใหม่เฉพาะที่ Offload ไม่ผ่าน',
-                                'ไล่อัปโหลดซ้ำเฉพาะไฟล์ที่ครั้งก่อนขึ้น bucket ไม่สำเร็จ — ดูรายตัวได้ในหน้าสื่อ (กรอง “Offload ไม่ผ่าน”)',
-                                'ลองใหม่',
+                                __( 'Retry failed offloads', 'insightx-offload' ),
+                                __( 'Re-upload only the files that failed to reach the bucket last time — see them one by one on the Media page (filter “Offload failed”)', 'insightx-offload' ),
+                                __( 'Retry', 'insightx-offload' ),
                                 '',
                                 empty( $stats['failed'] )
                             );
-                            $this->tool_card( 'download', 'ดาวน์โหลดไฟล์กลับจาก bucket', 'ถ้าเคยเปิด "Remove Local Media" ไฟล์บนเซิร์ฟเวอร์อาจหายไป — ใช้เครื่องมือนี้ดึงไฟล์ที่ขาดกลับมา', 'ดาวน์โหลดไฟล์' );
-                            $this->tool_card( 'remove', 'ลบไฟล์ทั้งหมดออกจาก bucket', 'ลบไฟล์ของทุก media ออกจาก bucket — ถ้าไฟล์ไม่มีบนเซิร์ฟเวอร์ ระบบจะดาวน์โหลดกลับมาก่อนลบ', 'ลบออกจาก Bucket', 'danger' );
+                            $this->tool_card( 'download', __( 'Download files back from the bucket', 'insightx-offload' ), __( 'If "Remove Local Media" was ever enabled, files may be missing from the server — use this tool to pull the missing files back', 'insightx-offload' ), __( 'Download Files', 'insightx-offload' ) );
+                            $this->tool_card( 'remove', __( 'Remove all files from the bucket', 'insightx-offload' ), __( 'Remove every media file from the bucket — files missing from the server are downloaded back before removal', 'insightx-offload' ), __( 'Remove from Bucket', 'insightx-offload' ), 'danger' );
                             if ( class_exists( 'WC_Product' ) ) {
-                                $this->tool_card( 'wc_downloads', 'ตรวจสอบและอัปเดต WooCommerce Downloadable Products', 'ตรวจสอบสินค้าที่ดาวน์โหลดได้ทั้งหมด ตั้งไฟล์ในบัคเก็ตให้เป็น private และอัปเดต URL ให้ถูกต้อง', 'ตรวจสอบและอัปเดต' );
+                                $this->tool_card( 'wc_downloads', __( 'Check and update WooCommerce downloadable products', 'insightx-offload' ), __( 'Check every downloadable product, make its files in the bucket private and update their URLs', 'insightx-offload' ), __( 'Check and Update', 'insightx-offload' ) );
                             }
                             ?>
                         </div>
@@ -383,19 +424,19 @@ class ISXM_Admin {
                         <div class="isxs-migrate-content">
 
                         <div class="isxs-card">
-                            <div class="isxs-card-head"><h2>เลือก Provider สำหรับ Migrate</h2></div>
+                            <div class="isxs-card-head"><h2><?php esc_html_e( 'Choose Providers to Migrate', 'insightx-offload' ); ?></h2></div>
                             <div class="isxs-card-body">
-                                <p class="isxs-hint">เลือกว่าจะดึงไฟล์มาจาก provider ไหน (ซ้าย) แล้วอัปโหลดไปยัง provider ไหน (ขวา) — ทั้งสองฝั่งเลือกจาก connection ที่ตั้งค่าไว้แล้วในแท็บ “การเชื่อมต่อ” ระบบจะ<strong>ดึงไฟล์มาเท่านั้น ไม่ลบไฟล์ที่ต้นทาง</strong></p>
+                                <p class="isxs-hint"><?php echo wp_kses( __( 'Choose which provider to pull files from (left) and which provider to upload them to (right) — both sides come from the connections configured in the “Connections” tab. Files are <strong>only copied, never deleted from the source</strong>', 'insightx-offload' ), [ 'strong' => [] ] ); ?></p>
                                 <div class="isxs-migrate-columns">
                                     <div class="isxs-migrate-col">
-                                        <h3><span class="isxs-migrate-col-dot isxs-migrate-col-dot-from"></span>จาก (Source)</h3>
+                                        <h3><span class="isxs-migrate-col-dot isxs-migrate-col-dot-from"></span><?php esc_html_e( 'From (Source)', 'insightx-offload' ); ?></h3>
                                         <?php $this->provider_grid( 'isxs-source-provider', 'isxs-source-provider-card', $s['source_provider'] ); ?>
                                     </div>
                                     <div class="isxs-migrate-arrow" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
                                     </div>
                                     <div class="isxs-migrate-col">
-                                        <h3><span class="isxs-migrate-col-dot isxs-migrate-col-dot-to"></span>ไป (ปลายทาง)</h3>
+                                        <h3><span class="isxs-migrate-col-dot isxs-migrate-col-dot-to"></span><?php esc_html_e( 'To (Destination)', 'insightx-offload' ); ?></h3>
                                         <?php $this->provider_grid( 'isxs-provider-migrate-mirror', 'isxs-dest-provider-card', $s['provider'] ); ?>
                                     </div>
                                 </div>
@@ -403,34 +444,34 @@ class ISXM_Admin {
                         </div>
 
                         <div class="isxs-card">
-                            <div class="isxs-card-head"><h2>โครงสร้าง Path บน Source</h2></div>
+                            <div class="isxs-card-head"><h2><?php esc_html_e( 'Source Path Structure', 'insightx-offload' ); ?></h2></div>
                             <div class="isxs-card-body">
-                                <p class="isxs-hint">ต้องตรงกับโครงสร้าง key จริงบน source bucket ระบบจะลองดึงตาม path นี้ ถ้าผิดจะเห็น error พร้อม key ที่ลองในรายการด้านล่างหลังกด Migrate</p>
+                                <p class="isxs-hint"><?php esc_html_e( 'Must match the real key structure in the source bucket. Files are fetched using this path; if it is wrong, you will see an error with the attempted key in the list below after clicking Migrate', 'insightx-offload' ); ?></p>
                                 <div class="isxs-field">
                                     <label for="isxs-source-prefix">Source Prefix</label>
                                     <input type="text" id="isxs-source-prefix" value="<?php echo esc_attr( $s['source_prefix'] ); ?>" placeholder="wp-content/uploads/">
                                 </div>
-                                <?php $this->toggle( 'source_use_year_month', $s['source_use_year_month'], 'มี Year & Month ใน Path', 'เช่น wp-content/uploads/2025/08/ไฟล์.jpg' ); ?>
+                                <?php $this->toggle( 'source_use_year_month', $s['source_use_year_month'], __( 'Year & Month in path', 'insightx-offload' ), __( 'e.g. wp-content/uploads/2025/08/file.jpg', 'insightx-offload' ) ); ?>
                             </div>
                         </div>
 
                         <div class="isxs-card">
-                            <div class="isxs-card-head"><h2>เปลี่ยน URL ในฐานข้อมูล</h2></div>
+                            <div class="isxs-card-head"><h2><?php esc_html_e( 'Replace URLs in the Database', 'insightx-offload' ); ?></h2></div>
                             <div class="isxs-card-body">
-                                <p class="isxs-hint">URL ที่ media เดิม<strong>ถูกเสิร์ฟอยู่จริงตอนนี้</strong> (ที่ฝังอยู่ใน post, ACF field, widget ฯลฯ) — หลัง Migrate ระบบจะแทนที่ URL นี้ด้วย URL ปลายทางใหม่ทั่วทั้งฐานข้อมูลให้อัตโนมัติ ไม่ใช่แค่ rewrite ตอนแสดงผล</p>
+                                <p class="isxs-hint"><?php echo wp_kses( __( 'The URL the existing media is <strong>actually served from right now</strong> (embedded in posts, ACF fields, widgets, etc.) — after the migration it is replaced with the new destination URL throughout the database automatically, not just rewritten at render time', 'insightx-offload' ), [ 'strong' => [] ] ); ?></p>
                                 <div class="isxs-field">
-                                    <label for="isxs-source-public-url">Source Public URL (เดิม)</label>
-                                    <input type="url" id="isxs-source-public-url" placeholder="เว้นว่างเพื่อเดาจาก Endpoint/Bucket ด้านบน" value="<?php echo esc_attr( $s['source_public_base_url'] ); ?>">
-                                    <p class="isxs-hint">เช่น https://old-bucket.s3.amazonaws.com หรือ https://cdn.เดิม.com — เว้นว่างถ้า media เดิมยังเป็น URL local (wp-content/uploads) ของเว็บนี้</p>
+                                    <label for="isxs-source-public-url"><?php esc_html_e( 'Source Public URL (current)', 'insightx-offload' ); ?></label>
+                                    <input type="url" id="isxs-source-public-url" placeholder="<?php esc_attr_e( 'Leave empty to infer it from the Endpoint/Bucket above', 'insightx-offload' ); ?>" value="<?php echo esc_attr( $s['source_public_base_url'] ); ?>">
+                                    <p class="isxs-hint"><?php esc_html_e( 'e.g. https://old-bucket.s3.amazonaws.com or https://cdn.old-domain.com — leave empty if existing media still uses this site\'s local URLs (wp-content/uploads)', 'insightx-offload' ); ?></p>
                                 </div>
                             </div>
                         </div>
 
                         <?php $this->tool_card(
                             'migrate',
-                            'Migrate จาก Source มา Destination',
-                            'ดึงไฟล์ทั้งหมดที่มีอยู่จริงใน source bucket มา upload ขึ้น storage ปลายทางที่ตั้งค่าไว้ในแท็บ “การเชื่อมต่อ” แล้วเปลี่ยน URL ในฐานข้อมูลให้ทันที — ไม่ลบไฟล์จาก source (ตรวจสอบกับ bucket จริงก่อนข้ามรายการที่ขึ้นไว้แล้วเสมอ)',
-                            'เริ่ม Migrate',
+                            __( 'Migrate from Source to Destination', 'insightx-offload' ),
+                            __( 'Copy every file that actually exists in the source bucket to the destination storage configured in the “Connections” tab, then update the URLs in the database right away — nothing is deleted from the source (the real bucket is always checked before skipping items already uploaded)', 'insightx-offload' ),
+                            __( 'Start Migration', 'insightx-offload' ),
                             '',
                             false
                         ); ?>
@@ -457,7 +498,7 @@ class ISXM_Admin {
                     <section class="isxs-tab" data-tab-panel="support">
 
                         <div class="isxs-card">
-                            <div class="isxs-card-head"><h2>ข้อมูลวินิจฉัย (Diagnostic)</h2></div>
+                            <div class="isxs-card-head"><h2><?php esc_html_e( 'Diagnostics', 'insightx-offload' ); ?></h2></div>
                             <div class="isxs-card-body">
                                 <pre class="isxs-diagnostic"><?php echo esc_html( ISXM_Tools::diagnostic_text() ); ?></pre>
                             </div>
@@ -543,15 +584,15 @@ class ISXM_Admin {
                     <div class="isxs-field isxs-col-span">
                         <label>Secret Key</label>
                         <input type="password" class="isxs-conn-secret-key" autocomplete="new-password" data-has-secret="<?php echo $has_secret ? '1' : '0'; ?>" value="<?php echo $has_secret ? esc_attr( str_repeat( '•', 16 ) ) : ''; ?>" placeholder="<?php echo esc_attr( $meta['secret_key_placeholder'] ); ?>">
-                        <p class="isxs-hint">🔐 เข้ารหัส AES-256-GCM (มี Auth tag ป้องกันการแก้ค่า) ก่อนบันทึกลงฐานข้อมูล — ค่าที่โชว์เป็นจุดคือตัวยึดตำแหน่ง ไม่ใช่ Secret Key จริง คัดลอกไปใช้ไม่ได้</p>
+                        <p class="isxs-hint"><?php esc_html_e( '🔐 Encrypted with AES-256-GCM (with an auth tag against tampering) before being saved to the database — the dots shown are a placeholder, not the real Secret Key, and cannot be copied', 'insightx-offload' ); ?></p>
                     </div>
                 </div>
                 <div class="isxs-toggle-row">
-                    <?php $this->toggle( 'path_style', $config['path_style'], 'Path-style URL', 'จำเป็นสำหรับ Minio/Garage — ปิดสำหรับ AWS S3 (virtual-hosted)' ); ?>
-                    <?php $this->toggle( 'send_public_acl', $config['send_public_acl'], 'ส่ง ACL public-read', 'เปิดเมื่อ bucket รองรับ ACL — ถ้า bucket ใช้ policy สาธารณะอยู่แล้วให้ปิดไว้' ); ?>
+                    <?php $this->toggle( 'path_style', $config['path_style'], 'Path-style URL', __( 'Required for Minio/Garage — off for AWS S3 (virtual-hosted)', 'insightx-offload' ) ); ?>
+                    <?php $this->toggle( 'send_public_acl', $config['send_public_acl'], __( 'Send ACL public-read', 'insightx-offload' ), __( 'Enable when the bucket supports ACLs — turn it off if the bucket already uses a public policy', 'insightx-offload' ) ); ?>
                 </div>
                 <div class="isxs-card-foot">
-                    <button type="button" class="isxs-btn isxs-btn-primary isxs-conn-save-btn">บันทึก</button>
+                    <button type="button" class="isxs-btn isxs-btn-primary isxs-conn-save-btn"><?php esc_html_e( 'Save', 'insightx-offload' ); ?></button>
                 </div>
             </div>
         </div>
@@ -566,15 +607,15 @@ class ISXM_Admin {
      */
     private function conn_badge_text( $configured, $status ) {
         if ( ! $configured ) {
-            return 'ยังไม่ได้ตั้งค่า';
+            return __( 'Not configured', 'insightx-offload' );
         }
         if ( $status['state'] === 'ok' ) {
-            return 'เชื่อมต่อสำเร็จ';
+            return __( 'Connected successfully', 'insightx-offload' );
         }
         if ( $status['state'] === 'error' ) {
-            return $status['message'] !== '' ? $status['message'] : 'เชื่อมต่อไม่สำเร็จ';
+            return $status['message'] !== '' ? $status['message'] : __( 'Connection failed', 'insightx-offload' );
         }
-        return 'ยังไม่ได้ทดสอบการเชื่อมต่อ';
+        return __( 'Connection not tested yet', 'insightx-offload' );
     }
 
     /**
@@ -589,7 +630,7 @@ class ISXM_Admin {
         $configured = ISXM_Connections::is_configured( $slug );
         $status     = ISXM_Connections::status( $slug );
         $state      = $configured ? $status['state'] : 'unknown';
-        $text       = $configured ? $this->conn_badge_text( true, $status ) : 'ยังไม่ได้ตั้งค่า — ไปที่แท็บ “การเชื่อมต่อ”';
+        $text       = $configured ? $this->conn_badge_text( true, $status ) : __( 'Not configured — go to the “Connections” tab', 'insightx-offload' );
         ?>
         <span class="isxs-conn-badge" data-state="<?php echo esc_attr( $state ); ?>" id="<?php echo esc_attr( $badge_id ); ?>">
             <span class="isxs-conn-dot"></span>
@@ -627,7 +668,7 @@ class ISXM_Admin {
                 // 401, etc.) shouldn't be pickable as a live destination/source.
                 $verified     = $configured && ISXM_Connections::status( $key )['state'] === 'ok';
                 $card_classes = trim( $card_class . ( $active ? ' is-active' : '' ) . ( $verified ? '' : ' is-unconfigured' ) );
-                $title        = $verified ? '' : ( $configured ? 'เชื่อมต่อ provider นี้ยังไม่สำเร็จ — ไปตรวจสอบที่แท็บ “การเชื่อมต่อ” ก่อน' : 'ยังไม่ได้ตั้งค่า provider นี้ — ไปตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน' );
+                $title        = $verified ? '' : ( $configured ? __( 'This provider has not connected successfully yet — check it in the “Connections” tab first', 'insightx-offload' ) : __( 'This provider is not configured yet — set it up in the “Connections” tab first', 'insightx-offload' ) );
                 ?>
                 <button type="button" class="<?php echo esc_attr( $card_classes ); ?>" data-provider="<?php echo esc_attr( $key ); ?>" <?php disabled( ! $verified ); ?> title="<?php echo esc_attr( $title ); ?>">
                     <?php if ( 'logo' === $meta[1] ) : ?>
@@ -691,7 +732,7 @@ class ISXM_Admin {
         <div class="isxs-card">
             <div class="isxs-card-head"><h2>URL Preview</h2></div>
             <div class="isxs-card-body">
-                <p class="isxs-hint">โครงสร้าง URL ของ media ตามการตั้งค่าปัจจุบัน (อัปเดตสด):</p>
+                <p class="isxs-hint"><?php esc_html_e( 'Media URL structure with the current settings (live preview):', 'insightx-offload' ); ?></p>
                 <div class="isxs-url-preview" data-url-preview>
                     <span class="isxs-url-part" data-part="scheme"><em>Scheme</em><code>https://</code></span>
                     <span class="isxs-url-part" data-part="domain"><em>Domain</em><code>—</code></span>
@@ -752,8 +793,8 @@ class ISXM_Admin {
                 <span class="isxs-tool-icon"><?php echo $this->tool_icon_svg( $id ); ?></span>
                 <h2><?php echo esc_html( $title ); ?></h2>
                 <div class="isxs-tool-actions">
-                    <button type="button" class="isxs-btn isxs-btn-ghost isxs-tool-stop" hidden>หยุด</button>
-                    <button type="button" class="isxs-btn isxs-btn-danger isxs-tool-cancel" hidden>ยกเลิก</button>
+                    <button type="button" class="isxs-btn isxs-btn-ghost isxs-tool-stop" hidden><?php esc_html_e( 'Stop', 'insightx-offload' ); ?></button>
+                    <button type="button" class="isxs-btn isxs-btn-danger isxs-tool-cancel" hidden><?php esc_html_e( 'Cancel', 'insightx-offload' ); ?></button>
                     <button type="button" class="isxs-btn <?php echo $variant === 'danger' ? 'isxs-btn-danger' : 'isxs-btn-primary'; ?> isxs-tool-run"><?php echo esc_html( $button ); ?></button>
                 </div>
             </div>
@@ -763,7 +804,7 @@ class ISXM_Admin {
                 <div class="isxs-tool-progress" hidden>
                     <div class="isxs-progress-track"><div class="isxs-progress-fill"></div></div>
                     <span class="isxs-tool-percent"></span>
-                    <span class="isxs-tool-count">0 รายการ</span>
+                    <span class="isxs-tool-count"><?php printf( esc_html__( '%s items', 'insightx-offload' ), 0 ); ?></span>
                 </div>
                 <p class="isxs-tool-eta"></p>
                 <ul class="isxs-tool-errors" hidden></ul>
@@ -793,51 +834,51 @@ class ISXM_Admin {
         $last_clean = ISXM_Sync::last_clean();
         if ( $last_run === null ) {
             $badge_state = 'unknown';
-            $badge_text  = 'ยังไม่เคยตรวจสอบกับ bucket จริง';
+            $badge_text  = __( 'Never checked against the real bucket', 'insightx-offload' );
         } elseif ( $last_clean === true ) {
             $badge_state = 'ok';
-            $badge_text  = 'ตรงกันทั้งหมดแล้ว';
+            $badge_text  = __( 'Everything matches', 'insightx-offload' );
         } elseif ( $last_clean === false ) {
             $badge_state = 'error';
-            $badge_text  = 'พบรายการไม่ตรงกัน';
+            $badge_text  = __( 'Mismatches found', 'insightx-offload' );
         } else {
             $badge_state = 'ok';
-            $badge_text  = 'ตรวจล่าสุดเมื่อ ' . human_time_diff( $last_run, time() ) . 'ที่แล้ว';
+            $badge_text  = sprintf( /* translators: %s: human-readable time difference */ __( 'Last checked %s ago', 'insightx-offload' ), human_time_diff( $last_run, time() ) );
         }
         // When the verdict replaces the timestamp in the label, the
         // timestamp still has to be reachable — hence the tooltip.
         $badge_title = $last_run === null
             ? ''
-            : 'ตรวจล่าสุดเมื่อ ' . human_time_diff( $last_run, time() ) . 'ที่แล้ว';
+            : sprintf( /* translators: %s: human-readable time difference */ __( 'Last checked %s ago', 'insightx-offload' ), human_time_diff( $last_run, time() ) );
         ?>
         <div class="isxs-card isxs-sync-card">
             <div class="isxs-tool-top">
                 <span class="isxs-tool-icon"><?php echo $this->tool_icon_svg( 'sync' ); ?></span>
-                <h2>ซิงก์ให้ตรงกับ bucket</h2>
+                <h2><?php esc_html_e( 'Sync with bucket', 'insightx-offload' ); ?></h2>
                 <div class="isxs-tool-actions">
                     <span class="isxs-conn-badge isxs-sync-status" data-state="<?php echo esc_attr( $badge_state ); ?>" title="<?php echo esc_attr( $badge_title ); ?>">
                         <span class="isxs-conn-dot"></span>
                         <span class="isxs-sync-status-text"><?php echo esc_html( $badge_text ); ?></span>
                     </span>
-                    <button type="button" class="isxs-btn isxs-btn-primary isxs-sync-run">ซิงก์ให้ตรงกับ bucket</button>
+                    <button type="button" class="isxs-btn isxs-btn-primary isxs-sync-run"><?php esc_html_e( 'Sync with bucket', 'insightx-offload' ); ?></button>
                 </div>
             </div>
             <div class="isxs-tool-body">
-                <p>ตรวจ bucket จริงเทียบกับข้อมูลที่ปลั๊กอินติดตามไว้ — เจอไฟล์ที่ถูกลบออกจาก bucket นอกปลั๊กอิน (console, CLI, สคริปต์ลบไฟล์) จะล้าง meta ค้างให้ Offload/ย้ายข้อมูลอัปโหลดใหม่ให้เอง</p>
+                <p><?php esc_html_e( 'Check the real bucket against what the plugin tracks — files deleted from the bucket outside the plugin (console, CLI, cleanup scripts) have their stale meta cleared so Offload/Migrate re-upload them', 'insightx-offload' ); ?></p>
                 <div class="isxs-tool-progress" hidden>
                     <div class="isxs-progress-track"><div class="isxs-progress-fill"></div></div>
                     <span class="isxs-tool-percent"></span>
-                    <span class="isxs-tool-count">0 รายการ</span>
+                    <span class="isxs-tool-count"><?php printf( esc_html__( '%s items', 'insightx-offload' ), 0 ); ?></span>
                 </div>
                 <p class="isxs-tool-eta"></p>
                 <ul class="isxs-tool-errors" hidden></ul>
                 <div class="isxs-sync-result" hidden>
                     <div class="isxs-sync-summary"></div>
                     <div class="isxs-sync-sample"></div>
-                    <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-apply" hidden>ล้าง meta ค้าง</button>
+                    <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-apply" hidden><?php esc_html_e( 'Clear stale meta', 'insightx-offload' ); ?></button>
                     <div class="isxs-sync-orphan-actions" hidden>
-                        <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-orphan-run">ลบ orphan objects</button>
-                        <p class="isxs-hint">object ใน prefix ปัจจุบันที่ไม่มี media ใน WordPress ตรงกัน</p>
+                        <button type="button" class="isxs-btn isxs-btn-danger isxs-sync-orphan-run"><?php esc_html_e( 'Delete orphan objects', 'insightx-offload' ); ?></button>
+                        <p class="isxs-hint"><?php esc_html_e( 'Objects in the current prefix with no matching WordPress media', 'insightx-offload' ); ?></p>
                     </div>
                 </div>
             </div>

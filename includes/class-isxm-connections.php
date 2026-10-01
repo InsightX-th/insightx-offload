@@ -33,12 +33,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => false,
                 'endpoint_locked'        => true,
-                'endpoint_hint'          => 'Amazon S3 คำนวณ endpoint จาก Region ที่ตั้งไว้ให้อัตโนมัติ ไม่ต้องกรอกเอง',
-                'region_hint'            => 'เช่น us-east-1, ap-southeast-1 — ต้องตรงกับ region ที่สร้าง bucket',
-                'endpoint_placeholder'   => 'ไม่ต้องกรอก (คำนวณจาก Region)',
-                'access_key_placeholder' => 'AWS Access Key ID เช่น AKIAIOSFODNN7EXAMPLE',
+                'endpoint_hint'          => __( 'Amazon S3 derives the endpoint from the configured Region automatically — no need to enter it', 'insightx-offload' ),
+                'region_hint'            => __( 'e.g. us-east-1, ap-southeast-1 — must match the region the bucket was created in', 'insightx-offload' ),
+                'endpoint_placeholder'   => __( 'Not required (derived from Region)', 'insightx-offload' ),
+                'access_key_placeholder' => __( 'AWS Access Key ID, e.g. AKIAIOSFODNN7EXAMPLE', 'insightx-offload' ),
                 'secret_key_placeholder' => 'AWS Secret Access Key',
-                'bucket_placeholder'     => 'ชื่อ S3 Bucket เช่น my-app-media',
+                'bucket_placeholder'     => __( 'S3 bucket name, e.g. my-app-media', 'insightx-offload' ),
             ],
             'minio' => [
                 'label'                  => 'Minio',
@@ -46,12 +46,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => true,
                 'endpoint_locked'        => false,
-                'endpoint_hint'          => 'ใส่ URL ของ Minio server เช่น https://minio.example.com',
-                'region_hint'            => 'Minio ใช้ค่าอะไรก็ได้ (default: us-east-1)',
+                'endpoint_hint'          => __( 'URL of the Minio server, e.g. https://minio.example.com', 'insightx-offload' ),
+                'region_hint'            => __( 'Minio accepts any value (default: us-east-1)', 'insightx-offload' ),
                 'endpoint_placeholder'   => 'https://minio.example.com:9000',
                 'access_key_placeholder' => 'Minio Access Key',
                 'secret_key_placeholder' => 'Minio Secret Key',
-                'bucket_placeholder'     => 'ชื่อ Bucket บน Minio',
+                'bucket_placeholder'     => __( 'Bucket name on Minio', 'insightx-offload' ),
             ],
             'garage' => [
                 'label'                  => 'Garage',
@@ -59,12 +59,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => true,
                 'endpoint_locked'        => false,
-                'endpoint_hint'          => 'ใส่ URL ของ Garage cluster เช่น https://garage.example.com',
-                'region_hint'            => 'ต้องตรงกับ s3_region ที่ตั้งใน garage.toml (default: garage)',
+                'endpoint_hint'          => __( 'URL of the Garage cluster, e.g. https://garage.example.com', 'insightx-offload' ),
+                'region_hint'            => __( 'Must match s3_region in garage.toml (default: garage)', 'insightx-offload' ),
                 'endpoint_placeholder'   => 'https://garage.example.com',
                 'access_key_placeholder' => 'Garage Access Key',
                 'secret_key_placeholder' => 'Garage Secret Key',
-                'bucket_placeholder'     => 'ชื่อ Bucket บน Garage',
+                'bucket_placeholder'     => __( 'Bucket name on Garage', 'insightx-offload' ),
             ],
             'r2' => [
                 'label'                  => 'Cloudflare R2',
@@ -72,12 +72,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => false,
                 'endpoint_locked'        => false,
-                'endpoint_hint'          => 'แทน <ACCOUNT_ID> ด้วย Cloudflare Account ID (ดูได้จาก R2 dashboard)',
-                'region_hint'            => 'Cloudflare R2 ใช้ "auto" เสมอ',
+                'endpoint_hint'          => __( 'Replace <ACCOUNT_ID> with your Cloudflare Account ID (shown on the R2 dashboard)', 'insightx-offload' ),
+                'region_hint'            => __( 'Cloudflare R2 always uses "auto"', 'insightx-offload' ),
                 'endpoint_placeholder'   => 'https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
                 'access_key_placeholder' => 'Cloudflare R2 Access Key ID',
                 'secret_key_placeholder' => 'Cloudflare R2 Secret Access Key',
-                'bucket_placeholder'     => 'ชื่อ R2 Bucket',
+                'bucket_placeholder'     => __( 'R2 bucket name', 'insightx-offload' ),
             ],
             'spaces' => [
                 'label'                  => 'DigitalOcean Spaces',
@@ -85,12 +85,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => false,
                 'endpoint_locked'        => false,
-                'endpoint_hint'          => 'แทน <REGION> ด้วย region ของ Space เช่น https://sgp1.digitaloceanspaces.com',
-                'region_hint'            => 'ต้องตรงกับ region ของ Space เช่น sgp1, nyc3, ams3',
+                'endpoint_hint'          => __( 'Replace <REGION> with the Space\'s region, e.g. https://sgp1.digitaloceanspaces.com', 'insightx-offload' ),
+                'region_hint'            => __( 'Must match the Space\'s region, e.g. sgp1, nyc3, ams3', 'insightx-offload' ),
                 'endpoint_placeholder'   => 'https://<REGION>.digitaloceanspaces.com',
                 'access_key_placeholder' => 'DigitalOcean Spaces Access Key',
                 'secret_key_placeholder' => 'DigitalOcean Spaces Secret Key',
-                'bucket_placeholder'     => 'ชื่อ Space เช่น my-space-name',
+                'bucket_placeholder'     => __( 'Space name, e.g. my-space-name', 'insightx-offload' ),
             ],
             'gcs' => [
                 'label'                  => 'Google Cloud Storage',
@@ -98,12 +98,12 @@ class ISXM_Connections {
                 'endpoint_default'       => 'https://storage.googleapis.com',
                 'path_style_default'     => true,
                 'endpoint_locked'        => true,
-                'endpoint_hint'          => 'ใช้ endpoint มาตรฐานของ Google Cloud Storage (HMAC / interoperability mode)',
-                'region_hint'            => 'GCS ไม่ใช้ค่านี้ในการ route — ใส่ "auto" ได้เลย',
+                'endpoint_hint'          => __( 'Uses the standard Google Cloud Storage endpoint (HMAC / interoperability mode)', 'insightx-offload' ),
+                'region_hint'            => __( 'GCS does not use this value for routing — "auto" is fine', 'insightx-offload' ),
                 'endpoint_placeholder'   => 'https://storage.googleapis.com',
                 'access_key_placeholder' => 'GCS HMAC Access Key',
                 'secret_key_placeholder' => 'GCS HMAC Secret',
-                'bucket_placeholder'     => 'ชื่อ Google Cloud Storage Bucket',
+                'bucket_placeholder'     => __( 'Google Cloud Storage bucket name', 'insightx-offload' ),
             ],
             'custom' => [
                 'label'                  => 'Other (S3-compatible)',
@@ -111,12 +111,12 @@ class ISXM_Connections {
                 'endpoint_default'       => '',
                 'path_style_default'     => true,
                 'endpoint_locked'        => false,
-                'endpoint_hint'          => 'ใส่ endpoint ของ storage provider ที่ใช้ (S3-compatible ใดก็ได้)',
-                'region_hint'            => 'ใส่ตามที่ provider กำหนด หรือ us-east-1 ถ้าไม่แน่ใจ',
-                'endpoint_placeholder'   => 'ใส่ endpoint ของ storage provider ที่ใช้',
-                'access_key_placeholder' => 'Access Key ของ storage provider',
-                'secret_key_placeholder' => 'Secret Key ของ storage provider',
-                'bucket_placeholder'     => 'ชื่อ Bucket',
+                'endpoint_hint'          => __( 'Endpoint of your storage provider (any S3-compatible service)', 'insightx-offload' ),
+                'region_hint'            => __( 'As specified by the provider, or us-east-1 if unsure', 'insightx-offload' ),
+                'endpoint_placeholder'   => __( 'Endpoint of your storage provider', 'insightx-offload' ),
+                'access_key_placeholder' => __( 'Storage provider Access Key', 'insightx-offload' ),
+                'secret_key_placeholder' => __( 'Storage provider Secret Key', 'insightx-offload' ),
+                'bucket_placeholder'     => __( 'Bucket name', 'insightx-offload' ),
             ],
         ];
     }
@@ -197,9 +197,16 @@ class ISXM_Connections {
         $existing_secret = isset( $stored[ $slug ]['secret_key'] ) ? (string) $stored[ $slug ]['secret_key'] : '';
 
         $stored[ $slug ] = [
-            'endpoint'        => isset( $config['endpoint'] ) ? esc_url_raw( trim( $config['endpoint'] ) ) : '',
+            // http(s) only: the endpoint is requested server-side, and a
+            // gopher://, file:// or ftp:// value would turn "Save & test"
+            // into a request to whatever internal service it names.
+            'endpoint'        => isset( $config['endpoint'] ) ? esc_url_raw( trim( $config['endpoint'] ), [ 'http', 'https' ] ) : '',
             'region'          => isset( $config['region'] ) ? sanitize_text_field( $config['region'] ) : '',
-            'bucket'          => isset( $config['bucket'] ) ? sanitize_text_field( $config['bucket'] ) : '',
+            // Bucket names are DNS labels (letters, digits, dots, hyphens;
+            // underscores for GCS). The name is spliced into hostnames and
+            // into every public media URL written into post HTML, so a quote
+            // or '@' here meant attribute injection or a different host.
+            'bucket'          => isset( $config['bucket'] ) ? preg_replace( '/[^A-Za-z0-9._-]/', '', (string) $config['bucket'] ) : '',
             'access_key'      => isset( $config['access_key'] ) ? sanitize_text_field( $config['access_key'] ) : '',
             'secret_key'      => $secret !== '' ? ISXM_Crypto::encrypt( $secret ) : $existing_secret,
             'path_style'      => ! empty( $config['path_style'] ),
@@ -232,7 +239,7 @@ class ISXM_Connections {
         }
         return [
             'state'   => 'unknown',
-            'message' => self::is_configured( $slug ) ? 'ยังไม่ได้ทดสอบการเชื่อมต่อ' : 'ยังไม่ได้ตั้งค่า',
+            'message' => self::is_configured( $slug ) ? __( 'Connection not tested yet', 'insightx-offload' ) : __( 'Not configured', 'insightx-offload' ),
         ];
     }
 

@@ -241,7 +241,7 @@ class ISXM_Migrate {
      */
     public static function migrate_attachment( $attachment_id, array $key_map, $defer_persist = false ) {
         if ( empty( $key_map ) ) {
-            return new WP_Error( 'isxs_no_source_keys', 'ไม่พบไฟล์ของรายการนี้บน source bucket' );
+            return new WP_Error( 'isxs_no_source_keys', __( 'File for this item not found in the source bucket', 'insightx-offload' ) );
         }
 
         // Normalised against the current uploads dir: the staging files are
@@ -249,7 +249,7 @@ class ISXM_Migrate {
         // put them outside the uploads tree entirely.
         $file = ISXM_Offload::local_path( $attachment_id );
         if ( $file === '' ) {
-            return new WP_Error( 'isxs_no_path', 'ไม่ทราบตำแหน่งไฟล์ของ attachment นี้' );
+            return new WP_Error( 'isxs_no_path', __( 'Unknown file location for this attachment', 'insightx-offload' ) );
         }
 
         $local_dir = trailingslashit( dirname( $file ) );
@@ -269,7 +269,7 @@ class ISXM_Migrate {
             if ( is_wp_error( $fetched ) ) {
                 return new WP_Error(
                     'isxs_source_fetch_failed',
-                    sprintf( 'ดึงไฟล์ %s จาก source ไม่สำเร็จ (key: %s): %s', $filename, $key, $fetched->get_error_message() )
+                    sprintf( __( 'Could not fetch %s from the source (key: %s): %s', 'insightx-offload' ), $filename, $key, $fetched->get_error_message() )
                 );
             }
         }

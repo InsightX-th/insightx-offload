@@ -42,8 +42,8 @@ class ISXM_Offload {
 
     /** Set by the Sync tool's cleanup on attachments whose LOCAL copy is
      *  ALSO gone (nothing left to re-upload from) — the Media Library shows
-     *  a distinct "ไฟล์หายทั้งสองที่" state for these instead of a plain
-     *  pending that would just fail with "ไม่พบไฟล์ต้นฉบับ". Cleared the
+     *  a distinct "File missing everywhere" state for these instead of a plain
+     *  pending that would just fail with "Original file not found". Cleared the
      *  moment a real offload succeeds. */
     const DATA_LOSS_META_KEY = '_isxs_data_loss';
 
@@ -262,7 +262,7 @@ class ISXM_Offload {
     public function offload_on_generate( $metadata, $attachment_id ) {
         if ( ISXM_Settings::get( 'offload_enabled' ) && ISXM_Settings::is_configured() ) {
             $result = $this->offload_attachment( $attachment_id, $metadata );
-            if ( is_wp_error( $result ) ) {
+            if ( is_wp_error( $result ) && $result->get_error_code() !== 'isxs_protected_download' ) {
                 isxm_log_error( 'Offload failed for #' . $attachment_id . ': ' . $result->get_error_message() );
             }
         }
@@ -288,6 +288,12 @@ class ISXM_Offload {
      * @return true|WP_Error
      */
     public function offload_attachment( $attachment_id, $metadata = null, $defer_persist = false, $origin = 'offload' ) {
+        if ( self::is_protected_download( $attachment_id ) ) {
+            // Not a failure — a deliberate skip, so no error record.
+            self::clear_error( $attachment_id );
+            return new WP_Error( 'isxs_protected_download', __( 'Protected download (WooCommerce / Easy Digital Downloads) — kept on the server so it is never publicly readable in the bucket', 'insightx-offload' ) );
+        }
+
         $result = $this->run_offload( $attachment_id, $metadata, $defer_persist, $origin );
 
         if ( is_wp_error( $result ) ) {
@@ -308,7 +314,7 @@ class ISXM_Offload {
      */
     private function run_offload( $attachment_id, $metadata, $defer_persist, $origin ) {
         if ( ! ISXM_Settings::is_configured() ) {
-            return new WP_Error( 'isxs_not_configured', 'ยังตั้งค่า storage ไม่ครบ' );
+            return new WP_Error( 'isxs_not_configured', __( 'Storage is not fully configured', 'insightx-offload' ) );
         }
 
         // Resolved against the CURRENT uploads dir, so an absolute path left
@@ -318,7 +324,7 @@ class ISXM_Offload {
         if ( $relative === null ) {
             // Not the same thing as a missing file: there is no usable path
             // to look for one at, and the fix is repairing the meta.
-            return new WP_Error( 'isxs_bad_meta', 'ข้อมูลไฟล์แนบ (_wp_attached_file) เสียหาย — ซ่อม meta ก่อนจึงจะ offload ได้' );
+            return new WP_Error( 'isxs_bad_meta', __( 'Attachment file data (_wp_attached_file) is corrupted — repair the meta before offloading', 'insightx-offload' ) );
         }
 
         $file = self::local_path( $attachment_id );
@@ -329,10 +335,10 @@ class ISXM_Offload {
             if ( self::get_record( $attachment_id ) !== null ) {
                 return new WP_Error(
                     'isxs_local_removed',
-                    'ไฟล์ถูกลบออกจากเซิร์ฟเวอร์แล้ว (อยู่บน bucket เดิม) — ใช้เครื่องมือ "ดาวน์โหลดไฟล์กลับจาก bucket" ก่อน แล้วค่อย offload ใหม่'
+                    __( 'The file was deleted from the server (it is still in the original bucket) — run "Download files back from the bucket" first, then offload again', 'insightx-offload' )
                 );
             }
-            return new WP_Error( 'isxs_missing_local', 'ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์' );
+            return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'insightx-offload' ) );
         }
 
         if ( $metadata === null ) {
@@ -398,7 +404,7 @@ class ISXM_Offload {
             $path = $local_dir . $filename;
             if ( ! file_exists( $path ) ) {
                 if ( $filename === $primary ) {
-                    return new WP_Error( 'isxs_missing_local', 'ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์' );
+                    return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'insightx-offload' ) );
                 }
                 $missing[] = $filename;
                 continue;
@@ -409,7 +415,7 @@ class ISXM_Offload {
             $result = $client->put_object( $base_key . $filename, $path, $mime, ! empty( $settings['send_public_acl'] ) );
             if ( is_wp_error( $result ) ) {
                 if ( $filename === $primary ) {
-                    return new WP_Error( 'isxs_upload_failed', sprintf( 'อัปโหลด %s ไม่สำเร็จ: %s', $filename, $result->get_error_message() ) );
+                    return new WP_Error( 'isxs_upload_failed', sprintf( __( 'Upload of %s failed: %s', 'insightx-offload' ), $filename, $result->get_error_message() ) );
                 }
                 isxm_log_error( sprintf( 'Offload #%d: size %s failed — %s', $attachment_id, $filename, $result->get_error_message() ) );
                 $missing[] = $filename;
@@ -419,7 +425,7 @@ class ISXM_Offload {
         }
 
         if ( empty( $uploaded ) ) {
-            return new WP_Error( 'isxs_nothing_uploaded', 'ไม่มีไฟล์ให้อัปโหลด' );
+            return new WP_Error( 'isxs_nothing_uploaded', __( 'No files to upload', 'insightx-offload' ) );
         }
 
         $record = [
@@ -666,7 +672,7 @@ class ISXM_Offload {
     public function download_attachment( $attachment_id ) {
         $info = self::get_record( $attachment_id );
         if ( ! is_array( $info ) || empty( $info['files'] ) ) {
-            return new WP_Error( 'isxs_not_offloaded', 'รายการนี้ยังไม่ได้ offload' );
+            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'insightx-offload' ) );
         }
 
         // Same normalisation as run_offload(): downloading back to a stale
@@ -674,12 +680,13 @@ class ISXM_Offload {
         // (worse) recreate that directory tree under the web root.
         $file = self::local_path( $attachment_id );
         if ( $file === '' ) {
-            return new WP_Error( 'isxs_no_path', 'ไม่ทราบตำแหน่งไฟล์ปลายทาง' );
+            return new WP_Error( 'isxs_no_path', __( 'Unknown destination file location', 'insightx-offload' ) );
         }
         $local_dir = trailingslashit( dirname( $file ) );
         wp_mkdir_p( $local_dir );
 
-        $client = self::client_for_info( $info );
+        $client  = self::client_for_info( $info );
+        $missing = [];
         foreach ( $info['files'] as $filename ) {
             // Stored meta is the one place a traversal name could have
             // been persisted without going through collect_filenames() —
@@ -688,7 +695,7 @@ class ISXM_Offload {
             // skipped file would later look "downloaded" to Remove).
             $filename = self::safe_filename( $filename );
             if ( $filename === '' ) {
-                return new WP_Error( 'isxs_unsafe_filename', 'ชื่อไฟล์ไม่ถูกต้องในข้อมูล attachment — ตรวจสอบ meta' );
+                return new WP_Error( 'isxs_unsafe_filename', __( 'Invalid file name in the attachment data — check the meta', 'insightx-offload' ) );
             }
             $path = $local_dir . $filename;
             if ( file_exists( $path ) ) {
@@ -699,12 +706,25 @@ class ISXM_Offload {
             // memory_limit is a fatal that takes the entire batch with it.
             $fetched = $client->get_object_to_file( $info['base_key'] . $filename, $path );
             if ( is_wp_error( $fetched ) ) {
-                // Distinguish "already gone from the bucket" (404) from real
-                // failures (auth/network) — remove_remote_attachment() treats
-                // the former as safe to proceed with instead of getting stuck.
-                $code = ( $fetched->get_error_code() === 'isxs_http_404' ) ? 'isxs_download_missing' : 'isxs_download_failed';
-                return new WP_Error( $code, sprintf( 'ดาวน์โหลด %s ไม่สำเร็จ: %s', $filename, $fetched->get_error_message() ) );
+                // "Already gone from the bucket" (404) is not a reason to stop:
+                // returning here left every later size un-downloaded, and
+                // remove_remote_attachment() — which proceeds on
+                // isxs_download_missing — then deleted those sizes from the
+                // bucket too, losing them for good. Keep fetching the rest and
+                // report the missing ones once every other file is local.
+                if ( $fetched->get_error_code() === 'isxs_http_404' ) {
+                    $missing[] = $filename;
+                    continue;
+                }
+                return new WP_Error( 'isxs_download_failed', sprintf( __( 'Download of %s failed: %s', 'insightx-offload' ), $filename, $fetched->get_error_message() ) );
             }
+        }
+
+        if ( $missing ) {
+            // Real failures (auth/network) returned above; only objects that
+            // no longer exist remain, which remove_remote_attachment() treats
+            // as safe to proceed with instead of getting stuck on this item.
+            return new WP_Error( 'isxs_download_missing', sprintf( __( 'Download of %s failed: %s', 'insightx-offload' ), implode( ', ', $missing ), 'HTTP 404' ) );
         }
 
         return true;
@@ -731,7 +751,7 @@ class ISXM_Offload {
     public function remove_remote_attachment( $attachment_id, $defer_persist = false ) {
         $info = self::get_record( $attachment_id );
         if ( ! is_array( $info ) || empty( $info['files'] ) ) {
-            return new WP_Error( 'isxs_not_offloaded', 'รายการนี้ยังไม่ได้ offload' );
+            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'insightx-offload' ) );
         }
 
         $restored = $this->download_attachment( $attachment_id );
@@ -747,7 +767,7 @@ class ISXM_Offload {
         foreach ( $info['files'] as $filename ) {
             $result = $client->delete_object( $info['base_key'] . $filename );
             if ( is_wp_error( $result ) ) {
-                return new WP_Error( 'isxs_delete_failed', sprintf( 'ลบ %s จาก bucket ไม่สำเร็จ: %s', $filename, $result->get_error_message() ) );
+                return new WP_Error( 'isxs_delete_failed', sprintf( __( 'Could not delete %s from the bucket: %s', 'insightx-offload' ), $filename, $result->get_error_message() ) );
             }
         }
 
@@ -1243,7 +1263,7 @@ class ISXM_Offload {
      * show up on real sites — a migration from another host leaves absolute
      * paths like `/home/oldsite/public_html/wp-content/uploads/2017/08/x.jpg`
      * in the meta — and both make `file_exists()` fail on a file that is
-     * sitting right there in uploads, which surfaced as "ไม่พบไฟล์ต้นฉบับ"
+     * sitting right there in uploads, which surfaced as "Original file not found"
      * on attachments the Media Library displays perfectly well.
      *
      * So: normalise to a path relative to the CURRENT uploads basedir and
@@ -1298,6 +1318,36 @@ class ISXM_Offload {
      * @param int $attachment_id Attachment post ID.
      * @return string Absolute path, or '' when the meta holds nothing usable.
      */
+    /**
+     * Upload folders whose files are sold, not shown: WooCommerce and Easy
+     * Digital Downloads keep them there behind their own deny rules and
+     * hand them out only through a purchase check.
+     */
+    const PROTECTED_DIRS = [ 'woocommerce_uploads/', 'edd/' ];
+
+    /**
+     * Whether an attachment lives in a protected download folder.
+     *
+     * The media bucket has to be publicly readable for delivery to work, so
+     * anything uploaded to it is public — an ACL on the object does not help
+     * on MinIO/R2, which ignore ACLs. These files therefore stay local.
+     *
+     * @param int $attachment_id
+     * @return bool
+     */
+    public static function is_protected_download( $attachment_id ) {
+        $relative = self::relative_local_path( $attachment_id );
+        if ( $relative === null ) {
+            return false;
+        }
+        foreach ( self::PROTECTED_DIRS as $dir ) {
+            if ( strpos( $relative, $dir ) === 0 ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function local_path( $attachment_id ) {
         $relative = self::relative_local_path( $attachment_id );
         if ( $relative === null ) {

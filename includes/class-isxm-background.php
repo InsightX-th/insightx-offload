@@ -124,7 +124,7 @@ class ISXM_Background {
         if ( ! isset( $schedules['isxs_one_minute'] ) ) {
             $schedules['isxs_one_minute'] = [
                 'interval' => self::CRON_INTERVAL,
-                'display'  => 'ทุก 1 นาที (InsightX Storage)',
+                'display'  => __( 'Every minute (InsightX Storage)', 'insightx-offload' ),
             ];
         }
         return $schedules;
@@ -366,7 +366,7 @@ class ISXM_Background {
                 if ( is_wp_error( $result ) ) {
                     // A run-level failure (storage not configured, source
                     // listing unreachable) — stop as RESUMABLE, never as
-                    // done: the cursor is still valid and "ทำต่อ" must be
+                    // done: the cursor is still valid and "Resume" must be
                     // able to pick up exactly here once it's fixed.
                     $job->finish( ISXM_Job::STATE_ERROR, $result->get_error_message() );
                     return false;
@@ -452,15 +452,15 @@ class ISXM_Background {
      */
     public static function start_job( $tool, $resume = false ) {
         if ( ! ISXM_Tools::is_known_tool( $tool ) ) {
-            return [ 'error' => 'ไม่รู้จักเครื่องมือนี้' ];
+            return [ 'error' => __( 'Unknown tool', 'insightx-offload' ) ];
         }
 
         // "Is anything running?" and "claim the running slot" have to be one
         // indivisible step. Two starts landing together (a double click, two
         // tabs, a CLI run beside the UI) both used to pass the check and both
-        // start, which is how two cards ended up showing "กำลังทำงาน…" at once.
+        // start, which is how two cards ended up showing "Working…" at once.
         if ( ! self::claim( self::START_LOCK, self::START_LOCK_TTL ) ) {
-            return [ 'error' => 'มีคำสั่งเริ่มงานอื่นกำลังทำอยู่ — รอสักครู่แล้วลองใหม่' ];
+            return [ 'error' => __( 'Another start request is in progress — wait a moment and try again', 'insightx-offload' ) ];
         }
 
         // Note: the lock is released before the caller responds, never in a
@@ -495,13 +495,13 @@ class ISXM_Background {
                 return [ 'payload' => self::status_payload() ];
             }
             return [
-                'error' => sprintf( 'มีงาน "%s" กำลังทำงานอยู่ — หยุดงานนั้นก่อนเริ่มงานใหม่', ISXM_Tools::tool_label( $running->tool ) ),
+                'error' => sprintf( __( 'The job "%s" is running — stop it before starting a new one', 'insightx-offload' ), ISXM_Tools::tool_label( $running->tool ) ),
             ];
         }
         if ( $running && $running->is_stalled() && $running->tool !== $tool ) {
             // The previous run's driver is demonstrably gone; park it as
             // resumable so this one can take the single running slot.
-            $running->finish( ISXM_Job::STATE_PAUSED, 'หยุดเองเพราะไม่มีการตอบสนอง' );
+            $running->finish( ISXM_Job::STATE_PAUSED, __( 'Stopped automatically because it stopped responding', 'insightx-offload' ) );
         }
 
         $precheck = ISXM_Tools::precheck_tool( $tool );
@@ -588,7 +588,7 @@ class ISXM_Background {
      * (loopback killed, PHP fatal, tab closed in browser-driven mode).
      *
      * Without this a stop asked for on a dead run would sit unconsumed
-     * forever and the card would stay stuck on "กำลังหยุด…". Only stalled
+     * forever and the card would stay stuck on "Stopping…". Only stalled
      * runs are touched — a live runner consumes its own signal, and racing
      * it here is exactly what the split was meant to prevent.
      */
@@ -605,7 +605,7 @@ class ISXM_Background {
     }
 
     /**
-     * Stop the run, keeping its cursor so "ทำต่อ" is exact.
+     * Stop the run, keeping its cursor so "Resume" is exact.
      *
      * Writes intent only. The runner picks it up between batches and stops
      * itself — the in-flight batch finishes server-side (there is no
@@ -681,7 +681,7 @@ class ISXM_Background {
     /**
      * Forget every tool's run at once. Used when the destination bucket
      * changes: a cursor into the previous destination's scan is
-     * meaningless against the new one, so keeping it would let "ทำต่อ"
+     * meaningless against the new one, so keeping it would let "Resume"
      * resume a run that no longer refers to anything.
      *
      * A run still in flight is stopped first — its in-flight batch is
@@ -745,7 +745,7 @@ class ISXM_Background {
      */
     private function guard() {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => 'ไม่มีสิทธิ์ใช้งาน' ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Permission denied', 'insightx-offload' ) ], 403 );
         }
         check_ajax_referer( ISXM_Tools::NONCE_ACTION, 'nonce' );
     }
@@ -756,7 +756,7 @@ class ISXM_Background {
     private function requested_tool() {
         $tool = isset( $_POST['tool'] ) ? sanitize_key( wp_unslash( $_POST['tool'] ) ) : '';
         if ( ! ISXM_Tools::is_known_tool( $tool ) ) {
-            wp_send_json_error( [ 'message' => 'ไม่รู้จักเครื่องมือนี้' ] );
+            wp_send_json_error( [ 'message' => __( 'Unknown tool', 'insightx-offload' ) ] );
         }
         return $tool;
     }
@@ -778,7 +778,7 @@ class ISXM_Background {
         $jobs = [];
         foreach ( ISXM_Job::all() as $tool => $job ) {
             $payload = $job->to_payload();
-            // Lets the card say "กำลังหยุด…" for as long as the stop is
+            // Lets the card say "Stopping…" for as long as the stop is
             // actually pending, instead of only until the next poll repaints
             // over the optimistic label the click set.
             $payload['signal'] = ISXM_Job::signal( $tool );
@@ -835,7 +835,11 @@ class ISXM_Background {
     private static function token() {
         $token  = get_option( self::TOKEN_OPTION );
         $marker = get_option( self::TOKEN_MARKER, '' );
-        $site   = home_url();
+        // The stored Site Address, not home_url(): home_url() follows the
+        // current request's is_ssl(), so an http cron dispatch and the https
+        // admin-ajax receiving it disagreed, and each side rotated the token
+        // out from under the other (every hop 403'd).
+        $site   = (string) get_option( 'home' );
 
         if ( ! is_string( $token ) || strlen( $token ) < 32 || $marker !== $site ) {
             $token = wp_generate_password( 48, false, false );

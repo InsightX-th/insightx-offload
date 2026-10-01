@@ -61,23 +61,23 @@ class ISXM_Media_Library {
 
         $state  = ISXM_Offload::status_for( $post_id );
         $labels = [
-            'offloaded'    => [ '☁', 'ขึ้น cloud แล้ว', 'isxs-ml-ok' ],
-            'partial'      => [ '◐', 'ขึ้นไม่ครบทุกขนาด', 'isxs-ml-partial' ],
-            'failed'       => [ '⚠', 'Offload ไม่ผ่าน', 'isxs-ml-failed' ],
-            'other_bucket' => [ '↗', 'อยู่ bucket อื่น', 'isxs-ml-other' ],
-            'pending'      => [ '○', 'ยังไม่ขึ้น cloud', 'isxs-ml-pending' ],
+            'offloaded'    => [ '☁', __( 'In the cloud', 'insightx-offload' ), 'isxs-ml-ok' ],
+            'partial'      => [ '◐', __( 'Not all sizes uploaded', 'insightx-offload' ), 'isxs-ml-partial' ],
+            'failed'       => [ '⚠', __( 'Offload failed', 'insightx-offload' ), 'isxs-ml-failed' ],
+            'other_bucket' => [ '↗', __( 'In another bucket', 'insightx-offload' ), 'isxs-ml-other' ],
+            'pending'      => [ '○', __( 'Not in the cloud yet', 'insightx-offload' ), 'isxs-ml-pending' ],
         ];
         list( $icon, $label, $class ) = $labels[ $state['status'] ];
 
         // The Sync tool flags attachments whose LOCAL copy is also gone
         // (set when it cleans a stale record that has nothing left to
         // re-upload from) — show a distinct state instead of a plain
-        // pending that would only fail with "ไม่พบไฟล์ต้นฉบับ".
+        // pending that would only fail with "Original file not found".
         if ( get_post_meta( $post_id, ISXM_Offload::DATA_LOSS_META_KEY, true ) ) {
             $icon  = '✕';
-            $label = 'ไฟล์หายทั้งสองที่';
+            $label = __( 'File missing everywhere', 'insightx-offload' );
             $class = 'isxs-ml-dataloss';
-            $detail = 'ทั้งไฟล์ local และไฟล์ใน bucket ไม่มีแล้ว — ต้องหาไฟล์ต้นฉบับกลับมาก่อน (Offload/Migrate อัปโหลดใหม่ไม่ได้)';
+            $detail = __( 'Neither the local file nor the bucket copy exists anymore — the original must be recovered first (Offload/Migrate cannot re-upload it)', 'insightx-offload' );
             printf(
                 '<span class="isxs-ml-status %s" title="%s"><span aria-hidden="true">%s</span> %s</span>',
                 esc_attr( $class ),
@@ -95,10 +95,10 @@ class ISXM_Media_Library {
         if ( $state['status'] === 'failed' && ! empty( $state['error']['message'] ) ) {
             $detail = $state['error']['message'];
             if ( ! empty( $state['error']['tries'] ) && $state['error']['tries'] > 1 ) {
-                $detail .= sprintf( ' (ลองแล้ว %d ครั้ง)', (int) $state['error']['tries'] );
+                $detail .= sprintf( __( ' (tried %d times)', 'insightx-offload' ), (int) $state['error']['tries'] );
             }
         } elseif ( $state['status'] === 'partial' ) {
-            $detail = 'ขาด: ' . implode( ', ', array_slice( $state['info']['missing'], 0, 5 ) );
+            $detail = __( 'Missing: ', 'insightx-offload' ) . implode( ', ', array_slice( $state['info']['missing'], 0, 5 ) );
         } elseif ( $state['status'] === 'other_bucket' && ! empty( $state['info']['bucket'] ) ) {
             $detail = 'bucket: ' . $state['info']['bucket'];
         }
@@ -127,10 +127,10 @@ class ISXM_Media_Library {
 
         $current = isset( $_GET[ self::FILTER_VAR ] ) ? sanitize_key( wp_unslash( $_GET[ self::FILTER_VAR ] ) ) : '';
         $options = [
-            ''          => 'สถานะ Storage ทั้งหมด',
-            'offloaded' => 'ขึ้น cloud แล้ว',
-            'pending'   => 'ยังไม่ขึ้น cloud',
-            'failed'    => 'Offload ไม่ผ่าน',
+            ''          => __( 'All Storage statuses', 'insightx-offload' ),
+            'offloaded' => __( 'In the cloud', 'insightx-offload' ),
+            'pending'   => __( 'Not in the cloud yet', 'insightx-offload' ),
+            'failed'    => __( 'Offload failed', 'insightx-offload' ),
         ];
 
         echo '<select name="' . esc_attr( self::FILTER_VAR ) . '">';
@@ -158,7 +158,7 @@ class ISXM_Media_Library {
      * denominators: the serialized bucket/endpoint entries are LIKE-matched
      * in SQL exactly the way ISXM_Tools::get_stats() does it. An earlier
      * version tested only for the meta row's existence, so a library holding
-     * records from a previous destination reported one "ขึ้น cloud แล้ว"
+     * records from a previous destination reported one "In the cloud"
      * number here and a different one on the settings page — the same files,
      * counted by two different rules.
      *
@@ -262,7 +262,7 @@ class ISXM_Media_Library {
         $actions['isxs_offload'] = sprintf(
             '<a href="#" class="isxs-ml-offload" data-id="%d">%s</a>',
             (int) $post->ID,
-            $state['status'] === 'failed' ? 'ลอง Offload ใหม่' : 'Offload ตอนนี้'
+            $state['status'] === 'failed' ? __( 'Retry Offload', 'insightx-offload' ) : __( 'Offload Now', 'insightx-offload' )
         );
 
         return $actions;
@@ -270,7 +270,7 @@ class ISXM_Media_Library {
 
     public function add_bulk_action( $actions ) {
         if ( current_user_can( 'manage_options' ) && ISXM_Settings::is_configured() ) {
-            $actions[ self::BULK_ACTION ] = 'Offload ขึ้น cloud';
+            $actions[ self::BULK_ACTION ] = __( 'Offload to the cloud', 'insightx-offload' );
         }
         return $actions;
     }
@@ -325,10 +325,10 @@ class ISXM_Media_Library {
         $ok     = (int) $_GET[ self::RESULT_OK ];
         $failed = isset( $_GET[ self::RESULT_ERROR ] ) ? (int) $_GET[ self::RESULT_ERROR ] : 0;
 
-        $message = sprintf( 'Offload สำเร็จ %d รายการ', $ok );
+        $message = sprintf( __( 'Offloaded %d items', 'insightx-offload' ), $ok );
         if ( $failed > 0 ) {
             $message .= sprintf(
-                ' — ไม่ผ่าน %d รายการ (<a href="%s">ดูเฉพาะที่ไม่ผ่าน</a>)',
+                __( ' — %d failed (<a href="%s">show only failures</a>)', 'insightx-offload' ),
                 $failed,
                 esc_url( admin_url( 'upload.php?mode=list&' . self::FILTER_VAR . '=failed' ) )
             );
@@ -368,8 +368,8 @@ class ISXM_Media_Library {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( ISXM_Tools::NONCE_ACTION ),
             'i18n'    => [
-                'working' => 'กำลัง offload…',
-                'error'   => 'เกิดข้อผิดพลาด',
+                'working' => __( 'Offloading…', 'insightx-offload' ),
+                'error'   => __( 'An error occurred', 'insightx-offload' ),
             ],
         ] );
     }

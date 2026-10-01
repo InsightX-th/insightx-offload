@@ -1,0 +1,1307 @@
+# Thai translation for InsightX Offload.
+# This file is distributed under the same license as the InsightX Offload plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: InsightX Offload\n"
+"Language: th\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Domain: insightx-offload\n"
+
+#: header
+msgid "Offload media to S3-compatible storage (Minio, Amazon S3, Cloudflare R2, DigitalOcean Spaces) with URL rewriting, provider switching/migration, Assets Pull (serve CSS/JS through a CDN), bulk tools and diagnostics — by InsightX"
+msgstr "Offload media ไปยัง S3-compatible storage (Minio, Amazon S3, Cloudflare R2, DigitalOcean Spaces) พร้อมระบบ URL rewrite, เปลี่ยน/ย้าย provider, Assets Pull (เสิร์ฟ CSS/JS ผ่าน CDN), bulk tools และ diagnostic — โดย InsightX"
+
+#: insightx-offload.php:154
+msgid "InsightX Storage is still active — both plugins share the same data (options / postmeta / ledger table) and must never run together. Please <strong>deactivate InsightX Storage</strong> first, then re-activate InsightX Offload. All existing data is picked up immediately, nothing needs to be offloaded again."
+msgstr "ตรวจพบว่า InsightX Storage ยังเปิดอยู่ — ทั้งสองปลั๊กอินใช้ข้อมูลชุดเดียวกัน (options / postmeta / ตาราง ledger) ห้ามรันพร้อมกัน กรุณา <strong>ปิด (Deactivate) InsightX Storage</strong> ก่อน แล้วเปิด InsightX Offload ใหม่ ข้อมูลทั้งหมดจะอ่านต่อได้ทันที ไม่ต้อง offload ใหม่"
+
+#: includes/class-isxm-admin.php:26 includes/class-isxm-admin.php:27 includes/class-isxm-admin.php:193
+msgid "InsightX Offload"
+msgstr ""
+
+#: includes/class-isxm-admin.php:73
+msgid "Saving…"
+msgstr "กำลังบันทึก…"
+
+#: includes/class-isxm-admin.php:74
+msgid "Saved ✓"
+msgstr "บันทึกแล้ว ✓"
+
+#: includes/class-isxm-admin.php:75
+msgid "Save Settings"
+msgstr "บันทึกการตั้งค่า"
+
+#: includes/class-isxm-admin.php:76 includes/class-isxm-admin.php:595
+msgid "Save"
+msgstr "บันทึก"
+
+#: includes/class-isxm-admin.php:77
+msgid "Testing…"
+msgstr "กำลังทดสอบ…"
+
+#: includes/class-isxm-admin.php:78
+msgid "Remove all files from the bucket?\n\nFiles missing from the server will be downloaded back before removal, but always keep a backup first"
+msgstr "ลบไฟล์ทั้งหมดออกจาก bucket?\n\nระบบจะดาวน์โหลดไฟล์ที่ไม่มีบนเซิร์ฟเวอร์กลับมาก่อนลบ แต่ควรมี backup ไว้ก่อนเสมอ"
+
+#: includes/class-isxm-admin.php:79
+msgid "Working…"
+msgstr "กำลังทำงาน…"
+
+#: includes/class-isxm-admin.php:80
+msgid "Done ✓"
+msgstr "เสร็จสิ้น ✓"
+
+#: includes/class-isxm-admin.php:81 includes/class-isxm-media-library.php:372
+msgid "An error occurred"
+msgstr "เกิดข้อผิดพลาด"
+
+#: includes/class-isxm-admin.php:82 includes/class-isxm-admin.php:796
+msgid "Stop"
+msgstr "หยุด"
+
+#: includes/class-isxm-admin.php:83
+msgid "Stopping…"
+msgstr "กำลังหยุด…"
+
+#: includes/class-isxm-admin.php:84
+msgid "Stopped"
+msgstr "หยุดแล้ว"
+
+#: includes/class-isxm-admin.php:85 includes/class-isxm-admin.php:797
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#: includes/class-isxm-admin.php:86
+msgid "Cancelling…"
+msgstr "กำลังยกเลิก…"
+
+#: includes/class-isxm-admin.php:89
+msgid "Cancel this job?\n\nWork already done stays intact, but the saved checkpoint is deleted — the next run will scan from the beginning"
+msgstr "ยกเลิกงานนี้?\n\nงานที่ทำไปแล้วยังอยู่ครบ แต่จุดที่ค้างไว้จะถูกลบ — เริ่มใหม่ครั้งหน้าจะไล่หาตั้งแต่ต้น"
+
+#: includes/class-isxm-admin.php:93
+msgid "Stalled — resuming automatically"
+msgstr "สะดุด — กำลังเริ่มทำต่อให้อัตโนมัติ"
+
+#: includes/class-isxm-admin.php:94
+msgid "Resume"
+msgstr "ทำต่อ"
+
+#: includes/class-isxm-admin.php:95
+msgid "Connecting…"
+msgstr "กำลังเชื่อมต่อ…"
+
+#: includes/class-isxm-admin.php:96
+msgid "Connection hiccup — retrying"
+msgstr "การเชื่อมต่อสะดุด — กำลังลองใหม่"
+
+#: includes/class-isxm-admin.php:97
+msgid "The connection dropped several times in a row — paused here. All work so far is saved; click \"Resume\" to continue from the same point"
+msgstr "การเชื่อมต่อขาดหลายครั้งติดกัน — หยุดไว้ตรงนี้ งานที่ทำไปแล้วถูกบันทึกครบ กด \"ทำต่อ\" เพื่อไปต่อจากจุดเดิม"
+
+#: includes/class-isxm-admin.php:100
+msgid "Counting files in the source bucket…"
+msgstr "กำลังนับไฟล์ใน source bucket…"
+
+#: includes/class-isxm-admin.php:104
+msgid "Writing URLs to the database…"
+msgstr "กำลังเขียน URL ลงฐานข้อมูล…"
+
+#: includes/class-isxm-admin.php:105
+msgid "This site cannot call itself — keep this page open until the job finishes"
+msgstr "เว็บนี้เรียกตัวเองไม่ได้ — เปิดหน้านี้ทิ้งไว้จนกว่างานจะเสร็จ"
+
+#: includes/class-isxm-admin.php:106
+msgid "Session expired or logged out — refresh this page and try again (all work so far is saved)"
+msgstr "เซสชันหมดอายุหรือถูก logout — refresh หน้านี้แล้วลองใหม่ (งานที่ทำไปแล้วถูกบันทึกครบ)"
+
+#: includes/class-isxm-admin.php:107
+msgid "This provider is not configured yet — set it up in the “Connections” tab"
+msgstr "ยังไม่ได้ตั้งค่า provider นี้ — ไปตั้งค่าที่แท็บ “การเชื่อมต่อ”"
+
+#: includes/class-isxm-admin.php:108 includes/class-isxm-admin.php:613
+msgid "Connected successfully"
+msgstr "เชื่อมต่อสำเร็จ"
+
+#: includes/class-isxm-admin.php:109 includes/class-isxm-admin.php:616
+msgid "Connection failed"
+msgstr "เชื่อมต่อไม่สำเร็จ"
+
+#: includes/class-isxm-admin.php:110 includes/class-isxm-admin.php:618 includes/class-isxm-connections.php:242
+msgid "Connection not tested yet"
+msgstr "ยังไม่ได้ทดสอบการเชื่อมต่อ"
+
+#: includes/class-isxm-admin.php:111
+#, php-format
+msgid "%s · (no bucket set)"
+msgstr "%s · (ยังไม่ตั้ง bucket)"
+
+#: includes/class-isxm-admin.php:112
+msgid "product-name"
+msgstr "ชื่อสินค้า"
+
+#: includes/class-isxm-admin.php:113
+msgid "theme-name"
+msgstr "ชื่อธีม"
+
+#: includes/class-isxm-admin.php:114 includes/class-isxm-admin.php:807 includes/class-isxm-admin.php:871
+#, php-format
+msgid "%s items"
+msgstr "%s รายการ"
+
+#: includes/class-isxm-admin.php:115
+#, php-format
+msgid "%1$s (elapsed %2$s)"
+msgstr "%1$s (ใช้เวลาไปแล้ว %2$s)"
+
+#: includes/class-isxm-admin.php:116
+#, php-format
+msgid "Elapsed %s"
+msgstr "ใช้เวลาไปแล้ว %s"
+
+#: includes/class-isxm-admin.php:117
+#, php-format
+msgid "About %1$s left · done around %2$s"
+msgstr "เหลืออีกประมาณ %1$s · เสร็จประมาณ %2$s"
+
+#: includes/class-isxm-admin.php:118
+#, php-format
+msgid "Done — took %s in total"
+msgstr "เสร็จสิ้น — ใช้เวลาทั้งหมด %s"
+
+#: includes/class-isxm-admin.php:119
+#, php-format
+msgid "Paused — %s elapsed"
+msgstr "หยุดพัก — ใช้เวลาไปแล้ว %s"
+
+#: includes/class-isxm-admin.php:120
+#, php-format
+msgid "Cancelled — after %s"
+msgstr "ยกเลิกแล้ว — ใช้เวลาไป %s"
+
+#: includes/class-isxm-admin.php:121
+#, php-format
+msgid "…and %s more"
+msgstr "…และอีก %s รายการ"
+
+#: includes/class-isxm-admin.php:122
+#, php-format
+msgid "%s failed — "
+msgstr "ไม่ผ่าน %s รายการ — "
+
+#: includes/class-isxm-admin.php:123
+msgid "View them on the Media page"
+msgstr "ดูรายการในหน้าสื่อ"
+
+#: includes/class-isxm-admin.php:124
+msgid "Last checked today"
+msgstr "ตรวจล่าสุดวันนี้"
+
+#: includes/class-isxm-admin.php:125
+#, php-format
+msgid "Last checked %s days ago"
+msgstr "ตรวจล่าสุดเมื่อ %s วันที่แล้ว"
+
+#: includes/class-isxm-admin.php:126 includes/class-isxm-admin.php:837
+msgid "Never checked against the real bucket"
+msgstr "ยังไม่เคยตรวจสอบกับ bucket จริง"
+
+#: includes/class-isxm-admin.php:127 includes/class-isxm-admin.php:840
+msgid "Everything matches"
+msgstr "ตรงกันทั้งหมดแล้ว"
+
+#: includes/class-isxm-admin.php:128 includes/class-isxm-admin.php:843
+msgid "Mismatches found"
+msgstr "พบรายการไม่ตรงกัน"
+
+#: includes/class-isxm-admin.php:129
+msgid " — a while ago, check again"
+msgstr " — นานแล้ว ควรตรวจอีกครั้ง"
+
+#: includes/class-isxm-admin.php:130
+msgid "Another job is running — stop it before starting a new one"
+msgstr "มีงานอื่นกำลังทำงานอยู่ — หยุดงานนั้นก่อนเริ่มงานใหม่"
+
+#: includes/class-isxm-admin.php:131
+#, php-format
+msgid "%s"
+msgstr "%s น."
+
+#: includes/class-isxm-admin.php:132
+#, php-format
+msgid "tomorrow %s"
+msgstr "พรุ่งนี้ %s น."
+
+#: includes/class-isxm-admin.php:133
+#, php-format
+msgid "%1$s %2$s"
+msgstr "%1$s %2$s น."
+
+#: includes/class-isxm-admin.php:134
+msgid "0 sec"
+msgstr "0 วินาที"
+
+#: includes/class-isxm-admin.php:135
+#, php-format
+msgid "%1$s hr %2$s min"
+msgstr "%1$s ชม. %2$s นาที"
+
+#: includes/class-isxm-admin.php:136
+#, php-format
+msgid "%1$s min %2$s sec"
+msgstr "%1$s นาที %2$s วินาที"
+
+#: includes/class-isxm-admin.php:137
+#, php-format
+msgid "%s sec"
+msgstr "%s วินาที"
+
+#: includes/class-isxm-admin.php:138
+#, php-format
+msgid "%s items with stale meta"
+msgstr "พบ meta ค้าง %s รายการ"
+
+#: includes/class-isxm-admin.php:139
+#, php-format
+msgid "of which %s are missing everywhere (see the red badge on the Media page)"
+msgstr "ในนั้น %s รายการไฟล์หายทั้งสองที่ (ดู badge แดงในหน้าสื่อ)"
+
+#: includes/class-isxm-admin.php:140
+#, php-format
+msgid "%s items missing everywhere (see the red badge on the Media page)"
+msgstr "%s รายการไฟล์หายทั้งสองที่ (ดู badge แดงในหน้าสื่อ)"
+
+#: includes/class-isxm-admin.php:141
+#, php-format
+msgid "%s items with missing sizes"
+msgstr "ขึ้นไม่ครบทุกขนาด %s รายการ"
+
+#: includes/class-isxm-admin.php:142
+#, php-format
+msgid "%s objects with no matching media"
+msgstr "object ไม่มี media ตรงกัน %s ไฟล์"
+
+#: includes/class-isxm-admin.php:143
+#, php-format
+msgid "%s objects outside the prefix (left alone)"
+msgstr "object นอก prefix %s ไฟล์ (ไม่แตะ)"
+
+#: includes/class-isxm-admin.php:144
+#, php-format
+msgid "Clear stale meta (%s)"
+msgstr "ล้าง meta ค้าง (%s)"
+
+#: includes/class-isxm-admin.php:145 includes/class-isxm-admin.php:878
+msgid "Clear stale meta"
+msgstr "ล้าง meta ค้าง"
+
+#: includes/class-isxm-admin.php:146
+#, php-format
+msgid "Delete orphan objects (%s)"
+msgstr "ลบ orphan objects (%s)"
+
+#: includes/class-isxm-admin.php:147 includes/class-isxm-admin.php:880
+msgid "Delete orphan objects"
+msgstr "ลบ orphan objects"
+
+#: includes/class-isxm-admin.php:148 includes/class-isxm-admin.php:857 includes/class-isxm-admin.php:863
+msgid "Sync with bucket"
+msgstr "ซิงก์ให้ตรงกับ bucket"
+
+#: includes/class-isxm-admin.php:149
+msgid "Sync failed"
+msgstr "ซิงก์ไม่สำเร็จ"
+
+#: includes/class-isxm-admin.php:150
+msgid "Syncing…"
+msgstr "กำลังซิงก์…"
+
+#: includes/class-isxm-admin.php:151
+msgid "Checking against the bucket…"
+msgstr "กำลังตรวจกับ bucket…"
+
+#: includes/class-isxm-admin.php:152
+msgid "Syncing with the real bucket…"
+msgstr "กำลังซิงก์กับ bucket จริง…"
+
+#: includes/class-isxm-admin.php:153
+msgid "Clearing…"
+msgstr "กำลังล้าง…"
+
+#: includes/class-isxm-admin.php:154
+#, php-format
+msgid "Cleared stale meta for %s items — click “Start Offload” to upload them again"
+msgstr "ล้าง meta ค้างเรียบร้อย %s รายการ — กด “เริ่ม Offload” เพื่ออัปโหลดขึ้นใหม่"
+
+#: includes/class-isxm-admin.php:155
+msgid "Delete all orphan objects from the bucket?\n\nEvery object under the current prefix that no media on THIS site uses will be deleted — including files another site keeps under the same prefix in this bucket (e.g. a staging copy). Objects outside the prefix are left alone. Always keep a backup first"
+msgstr "ลบ orphan objects ทั้งหมดออกจาก bucket?\n\nทุก object ใต้ prefix ปัจจุบันที่ไม่มี media ของเว็บนี้ใช้อยู่จะถูกลบ — รวมถึงไฟล์ของเว็บอื่นที่เก็บไว้ใต้ prefix เดียวกันใน bucket นี้ (เช่นเว็บ staging ที่ clone มา) ส่วน object นอก prefix จะไม่ถูกแตะ ควรมี backup ก่อนเสมอ"
+
+#: includes/class-isxm-admin.php:156
+msgid "Deleting…"
+msgstr "กำลังลบ…"
+
+#: includes/class-isxm-admin.php:157
+msgid "Listing and deleting orphans…"
+msgstr "กำลังลิสต์และลบ orphan…"
+
+#: includes/class-isxm-admin.php:158
+#, php-format
+msgid "Deleted %s orphan objects — the bucket is clean"
+msgstr "ลบ orphan objects เรียบร้อย %s ไฟล์ — bucket สะอาดแล้ว"
+
+#: includes/class-isxm-admin.php:181
+msgid "Media delivery cannot be tested until storage connects successfully — see the \"File Storage Settings\" section on the left"
+msgstr "ไม่สามารถทดสอบการเสิร์ฟ media ได้จนกว่าจะเชื่อมต่อ storage สำเร็จ — ดูหัวข้อ \"การตั้งค่าจัดเก็บไฟล์\" ด้านซ้าย"
+
+#: includes/class-isxm-admin.php:194
+msgid "Offload media to S3-compatible storage (Minio · S3 · R2 · Spaces) + provider migration"
+msgstr "Offload media ไปยัง S3-compatible storage (Minio · S3 · R2 · Spaces) + ย้าย provider"
+
+#: includes/class-isxm-admin.php:206
+msgid "Offload Status"
+msgstr "สถานะ Offload"
+
+#: includes/class-isxm-admin.php:209
+msgid "Refresh"
+msgstr "รีเฟรช"
+
+#: includes/class-isxm-admin.php:214
+msgid "Source"
+msgstr "แหล่งที่มา"
+
+#: includes/class-isxm-admin.php:214
+msgid "Offloaded"
+msgstr "Offloaded"
+
+#: includes/class-isxm-admin.php:214
+msgid "Remaining"
+msgstr "เหลือ"
+
+#: includes/class-isxm-admin.php:225
+#, php-format
+msgid "Offload Remaining %s items"
+msgstr "Offload ที่เหลือ %s รายการ"
+
+#: includes/class-isxm-admin.php:227
+#, php-format
+msgid "Total %1$s items · %2$s on the bucket"
+msgstr "รวม %1$s รายการ · ขึ้น bucket แล้ว %2$s"
+
+#: includes/class-isxm-admin.php:233
+msgid "Media"
+msgstr "สื่อ"
+
+#: includes/class-isxm-admin.php:234
+msgid "Assets"
+msgstr "ทรัพยากร"
+
+#: includes/class-isxm-admin.php:235
+msgid "Tools"
+msgstr "เครื่องมือ"
+
+#: includes/class-isxm-admin.php:236
+msgid "Migrate"
+msgstr "ย้ายข้อมูล"
+
+#: includes/class-isxm-admin.php:237
+msgid "Connections"
+msgstr "การเชื่อมต่อ"
+
+#: includes/class-isxm-admin.php:238
+msgid "Support"
+msgstr "ช่วยเหลือ"
+
+#: includes/class-isxm-admin.php:255
+msgid "File Storage Settings"
+msgstr "การตั้งค่าจัดเก็บไฟล์"
+
+#: includes/class-isxm-admin.php:269
+msgid "Choose a storage provider"
+msgstr "เลือก Storage Provider"
+
+#: includes/class-isxm-admin.php:284
+msgid "Copy media files to storage automatically after upload"
+msgstr "คัดลอกไฟล์ media ขึ้น storage อัตโนมัติหลังอัปโหลด"
+
+#: includes/class-isxm-admin.php:285
+msgid "Delete files from the server after a successful offload to save space (caution: some image-editing plugins need the local file)"
+msgstr "ลบไฟล์บนเซิร์ฟเวอร์หลัง offload สำเร็จ เพื่อประหยัดพื้นที่ (ระวัง: ปลั๊กอินแก้รูปบางตัวต้องใช้ไฟล์ local)"
+
+#: includes/class-isxm-admin.php:286
+msgid "Disable intermediate image sizes"
+msgstr "ไม่สร้างรูปขนาดย่อ"
+
+#: includes/class-isxm-admin.php:286
+msgid "Stop WordPress from generating any intermediate sizes (thumbnail / medium / large / 1536 / 2048, including WooCommerce and theme sizes). Each upload becomes a single file in the bucket and the original is kept as-is without a -scaled copy — caution: srcset goes away and every request for a small image gets the full file. Suited to headless sites that resize images themselves. Only affects newly uploaded files"
+msgstr "ให้ WordPress หยุดสร้างขนาดย่อทั้งหมด (thumbnail / medium / large / 1536 / 2048 รวมถึงขนาดของ WooCommerce และธีม) อัปโหลดหนึ่งครั้งได้ไฟล์เดียวบน bucket และเก็บไฟล์ต้นฉบับไว้ตามเดิมโดยไม่ย่อเป็น -scaled — ระวัง: srcset จะหายและทุกจุดที่ขอรูปเล็กจะได้ไฟล์เต็ม เหมาะกับเว็บที่ดึงรูปแบบ headless แล้วไปย่อเอง มีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น"
+
+#: includes/class-isxm-admin.php:287
+msgid "Write permanent URLs to the database"
+msgstr "เขียน URL ถาวรลงฐานข้อมูล"
+
+#: includes/class-isxm-admin.php:287
+msgid "Write the new (remote) URLs directly into post_content / postmeta / options / guid after offloading — Bulk Offload writes them in a single pass at the end of the job (scanning each table once) instead of scanning every table on every batch (URLs are still rewritten at render time if “Deliver Offloaded Media” is on)"
+msgstr "เขียน URL ใหม่ (remote) ลงใน post_content / postmeta / options / guid โดยตรงหลัง offload — Bulk Offload เขียนแบบหนึ่ง-pass ตอนท้ายงาน (สแกนแต่ละตารางครั้งเดียว) ไม่สแกนทั้งตารางทุก batch (URL ยังถูก rewrite ตอนแสดงผลอยู่ดีถ้าเปิด “Deliver Offloaded Media”)"
+
+#: includes/class-isxm-admin.php:288
+msgid "Group this site's files under a prefix in the bucket"
+msgstr "จัดกลุ่มไฟล์ของเว็บนี้ด้วย prefix ใน bucket"
+
+#: includes/class-isxm-admin.php:292
+msgid "Add the upload year/month to the path for extra organization"
+msgstr "ใส่ปี/เดือนที่อัปโหลดใน path เพื่อจัดระเบียบอีกชั้น"
+
+#: includes/class-isxm-admin.php:293
+msgid "Add a version number to the path so the CDN always serves the latest file"
+msgstr "ใส่เลข version ใน path เพื่อให้ CDN เสิร์ฟไฟล์เวอร์ชันล่าสุดเสมอ"
+
+#: includes/class-isxm-admin.php:302
+msgid "Folder Structure"
+msgstr "โครงสร้างโฟลเดอร์"
+
+#: includes/class-isxm-admin.php:303
+msgid "Group files in the bucket by content type"
+msgstr "จัดกลุ่มไฟล์บน bucket แยกตามประเภทเนื้อหา"
+
+#: includes/class-isxm-admin.php:308
+msgid "Folders by content type"
+msgstr "แยกโฟลเดอร์ตามประเภทเนื้อหา"
+
+#: includes/class-isxm-admin.php:308
+msgid "Bucket folder names per content type — changes only affect newly uploaded files; files already uploaded keep their old path"
+msgstr "ชื่อโฟลเดอร์บน bucket แยกตามประเภทเนื้อหา — เปลี่ยนแล้วมีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น ไฟล์เก่าที่อัปโหลดไปแล้วยังอยู่ path เดิม"
+
+#: includes/class-isxm-admin.php:319
+msgid "When on, matching files skip Year & Month and Object Version automatically, giving short paths like <code>products/product-name/file.jpg</code> — also turn off Prefix in the “File Storage Settings” card for the shortest paths"
+msgstr "เปิดแล้วไฟล์ที่เข้าเงื่อนไขจะข้าม Year & Month กับ Object Version อัตโนมัติ ได้ path สั้นแบบ <code>products/ชื่อสินค้า/ไฟล์.jpg</code> — ปิด Prefix ในการ์ด “การตั้งค่าจัดเก็บไฟล์” ด้วยถ้าอยากได้สั้นที่สุด"
+
+#: includes/class-isxm-admin.php:320
+msgid "Files whose type cannot be determined (not attached to a product/post/category) still use Year & Month and Object Version as before"
+msgstr "ไฟล์ที่ระบุประเภทไม่ได้ (ไม่ได้ผูกกับสินค้า/บทความ/หมวดหมู่) ยังใช้ Year & Month และ Object Version ตามเดิม"
+
+#: includes/class-isxm-admin.php:321
+msgid "Caution: without Year & Month and Object Version, different files with the same name under the same product can overwrite each other in the bucket"
+msgstr "ข้อควรระวัง: พอตัด Year & Month กับ Object Version ออก ไฟล์คนละตัวที่ชื่อซ้ำกันใต้สินค้าเดียวกันจะทับกันบน bucket ได้"
+
+#: includes/class-isxm-admin.php:331
+msgid "Delivery"
+msgstr "การเสิร์ฟไฟล์ (Delivery)"
+
+#: includes/class-isxm-admin.php:332
+msgid "(no bucket set)"
+msgstr "(ยังไม่ตั้ง bucket)"
+
+#: includes/class-isxm-admin.php:340
+msgid "Rewrite URLs of offloaded media to point at storage/CDN"
+msgstr "rewrite URL ของ media ที่ offload แล้วให้ชี้ไปที่ storage/CDN"
+
+#: includes/class-isxm-admin.php:341
+msgid "Always use https for every rewritten URL"
+msgstr "ใช้ https กับทุก URL ที่ rewrite เสมอ"
+
+#: includes/class-isxm-admin.php:345
+msgid "If a CDN already points at the bucket, enter its domain here — leave empty to use the bucket URL directly"
+msgstr "ถ้ามี CDN ชี้ที่ bucket อยู่แล้ว ใส่โดเมนที่นี่ — เว้นว่างเพื่อใช้ URL ของ bucket ตรงๆ"
+
+#: includes/class-isxm-admin.php:365
+msgid "Serve theme and plugin CSS / JS through a CDN"
+msgstr "เสิร์ฟไฟล์ CSS / JS ของธีมและปลั๊กอินผ่าน CDN"
+
+#: includes/class-isxm-admin.php:370
+msgid "Rewrite URLs of enqueued theme and plugin assets (styles/scripts) to point at the CDN domain"
+msgstr "เปลี่ยน URL ของไฟล์ asset ที่ enqueue (style/script) ของธีมและปลั๊กอินให้ชี้ไปที่โดเมน CDN"
+
+#: includes/class-isxm-admin.php:371
+msgid "Always use https for every rewritten asset URL"
+msgstr "ใช้ https กับทุก URL ของ asset ที่ rewrite เสมอ"
+
+#: includes/class-isxm-admin.php:375
+msgid "Must be a CDN in front of this site (e.g. CloudFront with this site as origin) — asset files are not in the bucket. Note: fonts/images referenced inside CSS files are still served from the server as usual"
+msgstr "ต้องเป็น CDN ที่อยู่หน้าเว็บนี้ (เช่น CloudFront ชี้ origin ที่เว็บ) — ไฟล์ asset ไม่ได้อยู่ใน bucket หมายเหตุ: font/รูปที่อ้างอิงภายในไฟล์ CSS จะยังเสิร์ฟจากเซิร์ฟเวอร์ตามปกติ"
+
+#: includes/class-isxm-admin.php:377
+msgid "Sample asset URLs after rewrite (live preview):"
+msgstr "ตัวอย่าง URL ของ asset หลัง rewrite (อัปเดตสด):"
+
+#: includes/class-isxm-admin.php:395
+msgid "Offload remaining media"
+msgstr "Offload media ที่เหลือ"
+
+#: includes/class-isxm-admin.php:396
+msgid "Upload every media item not yet offloaded to the bucket in batches — the job runs server-side, so you can close the tab and click \"Resume\" later to continue from the same point (if files were deleted from the bucket outside the plugin, run the Sync tool first)"
+msgstr "อัปโหลด media ทั้งหมดที่ยังไม่ได้ offload ขึ้น bucket ทีละชุด — งานทำงานฝั่งเซิร์ฟเวอร์ ปิดแท็บได้ กลับมากด \"ทำต่อ\" ได้จากจุดเดิม (ถ้าไฟล์ถูกลบออกจาก bucket นอกปลั๊กอิน ให้ใช้เครื่องมือ Sync ตรวจก่อน)"
+
+#: includes/class-isxm-admin.php:397
+msgid "Start Offload"
+msgstr "เริ่ม Offload"
+
+#: includes/class-isxm-admin.php:406
+msgid "Retry failed offloads"
+msgstr "ลองใหม่เฉพาะที่ Offload ไม่ผ่าน"
+
+#: includes/class-isxm-admin.php:407
+msgid "Re-upload only the files that failed to reach the bucket last time — see them one by one on the Media page (filter “Offload failed”)"
+msgstr "ไล่อัปโหลดซ้ำเฉพาะไฟล์ที่ครั้งก่อนขึ้น bucket ไม่สำเร็จ — ดูรายตัวได้ในหน้าสื่อ (กรอง “Offload ไม่ผ่าน”)"
+
+#: includes/class-isxm-admin.php:408
+msgid "Retry"
+msgstr "ลองใหม่"
+
+#: includes/class-isxm-admin.php:412 includes/class-isxm-tools.php:980
+msgid "Download files back from the bucket"
+msgstr "ดาวน์โหลดไฟล์กลับจาก bucket"
+
+#: includes/class-isxm-admin.php:412
+msgid "If \"Remove Local Media\" was ever enabled, files may be missing from the server — use this tool to pull the missing files back"
+msgstr "ถ้าเคยเปิด \"Remove Local Media\" ไฟล์บนเซิร์ฟเวอร์อาจหายไป — ใช้เครื่องมือนี้ดึงไฟล์ที่ขาดกลับมา"
+
+#: includes/class-isxm-admin.php:412
+msgid "Download Files"
+msgstr "ดาวน์โหลดไฟล์"
+
+#: includes/class-isxm-admin.php:413
+msgid "Remove all files from the bucket"
+msgstr "ลบไฟล์ทั้งหมดออกจาก bucket"
+
+#: includes/class-isxm-admin.php:413
+msgid "Remove every media file from the bucket — files missing from the server are downloaded back before removal"
+msgstr "ลบไฟล์ของทุก media ออกจาก bucket — ถ้าไฟล์ไม่มีบนเซิร์ฟเวอร์ ระบบจะดาวน์โหลดกลับมาก่อนลบ"
+
+#: includes/class-isxm-admin.php:413
+msgid "Remove from Bucket"
+msgstr "ลบออกจาก Bucket"
+
+#: includes/class-isxm-admin.php:415
+msgid "Check and update WooCommerce downloadable products"
+msgstr "ตรวจสอบและอัปเดต WooCommerce Downloadable Products"
+
+#: includes/class-isxm-admin.php:415
+msgid "Check every downloadable product, make its files in the bucket private and update their URLs"
+msgstr "ตรวจสอบสินค้าที่ดาวน์โหลดได้ทั้งหมด ตั้งไฟล์ในบัคเก็ตให้เป็น private และอัปเดต URL ให้ถูกต้อง"
+
+#: includes/class-isxm-admin.php:415
+msgid "Check and Update"
+msgstr "ตรวจสอบและอัปเดต"
+
+#: includes/class-isxm-admin.php:427
+msgid "Choose Providers to Migrate"
+msgstr "เลือก Provider สำหรับ Migrate"
+
+#: includes/class-isxm-admin.php:429
+msgid "Choose which provider to pull files from (left) and which provider to upload them to (right) — both sides come from the connections configured in the “Connections” tab. Files are <strong>only copied, never deleted from the source</strong>"
+msgstr "เลือกว่าจะดึงไฟล์มาจาก provider ไหน (ซ้าย) แล้วอัปโหลดไปยัง provider ไหน (ขวา) — ทั้งสองฝั่งเลือกจาก connection ที่ตั้งค่าไว้แล้วในแท็บ “การเชื่อมต่อ” ระบบจะ<strong>ดึงไฟล์มาเท่านั้น ไม่ลบไฟล์ที่ต้นทาง"
+
+#: includes/class-isxm-admin.php:432
+msgid "From (Source)"
+msgstr "จาก (Source)"
+
+#: includes/class-isxm-admin.php:439
+msgid "To (Destination)"
+msgstr "ไป (ปลายทาง)"
+
+#: includes/class-isxm-admin.php:447
+msgid "Source Path Structure"
+msgstr "โครงสร้าง Path บน Source"
+
+#: includes/class-isxm-admin.php:449
+msgid "Must match the real key structure in the source bucket. Files are fetched using this path; if it is wrong, you will see an error with the attempted key in the list below after clicking Migrate"
+msgstr "ต้องตรงกับโครงสร้าง key จริงบน source bucket ระบบจะลองดึงตาม path นี้ ถ้าผิดจะเห็น error พร้อม key ที่ลองในรายการด้านล่างหลังกด Migrate"
+
+#: includes/class-isxm-admin.php:454
+msgid "Year & Month in path"
+msgstr "มี Year & Month ใน Path"
+
+#: includes/class-isxm-admin.php:454
+msgid "e.g. wp-content/uploads/2025/08/file.jpg"
+msgstr "เช่น wp-content/uploads/2025/08/ไฟล์.jpg"
+
+#: includes/class-isxm-admin.php:459
+msgid "Replace URLs in the Database"
+msgstr "เปลี่ยน URL ในฐานข้อมูล"
+
+#: includes/class-isxm-admin.php:461
+msgid "The URL the existing media is <strong>actually served from right now</strong> (embedded in posts, ACF fields, widgets, etc.) — after the migration it is replaced with the new destination URL throughout the database automatically, not just rewritten at render time"
+msgstr "URL ที่ media เดิม<strong>ถูกเสิร์ฟอยู่จริงตอนนี้</strong> (ที่ฝังอยู่ใน post, ACF field, widget ฯลฯ) — หลัง Migrate ระบบจะแทนที่ URL นี้ด้วย URL ปลายทางใหม่ทั่วทั้งฐานข้อมูลให้อัตโนมัติ ไม่ใช่แค่ rewrite ตอนแสดงผล"
+
+#: includes/class-isxm-admin.php:463
+msgid "Source Public URL (current)"
+msgstr "Source Public URL (เดิม)"
+
+#: includes/class-isxm-admin.php:464
+msgid "Leave empty to infer it from the Endpoint/Bucket above"
+msgstr "เว้นว่างเพื่อเดาจาก Endpoint/Bucket ด้านบน"
+
+#: includes/class-isxm-admin.php:465
+msgid "e.g. https://old-bucket.s3.amazonaws.com or https://cdn.old-domain.com — leave empty if existing media still uses this site's local URLs (wp-content/uploads)"
+msgstr "เช่น https://old-bucket.s3.amazonaws.com หรือ https://cdn.เดิม.com — เว้นว่างถ้า media เดิมยังเป็น URL local (wp-content/uploads) ของเว็บนี้"
+
+#: includes/class-isxm-admin.php:472
+msgid "Migrate from Source to Destination"
+msgstr "Migrate จาก Source มา Destination"
+
+#: includes/class-isxm-admin.php:473
+msgid "Copy every file that actually exists in the source bucket to the destination storage configured in the “Connections” tab, then update the URLs in the database right away — nothing is deleted from the source (the real bucket is always checked before skipping items already uploaded)"
+msgstr "ดึงไฟล์ทั้งหมดที่มีอยู่จริงใน source bucket มา upload ขึ้น storage ปลายทางที่ตั้งค่าไว้ในแท็บ “การเชื่อมต่อ” แล้วเปลี่ยน URL ในฐานข้อมูลให้ทันที — ไม่ลบไฟล์จาก source (ตรวจสอบกับ bucket จริงก่อนข้ามรายการที่ขึ้นไว้แล้วเสมอ)"
+
+#: includes/class-isxm-admin.php:474
+msgid "Start Migration"
+msgstr "เริ่ม Migrate"
+
+#: includes/class-isxm-admin.php:501
+msgid "Diagnostics"
+msgstr "ข้อมูลวินิจฉัย (Diagnostic)"
+
+#: includes/class-isxm-admin.php:587
+msgid "🔐 Encrypted with AES-256-GCM (with an auth tag against tampering) before being saved to the database — the dots shown are a placeholder, not the real Secret Key, and cannot be copied"
+msgstr "🔐 เข้ารหัส AES-256-GCM (มี Auth tag ป้องกันการแก้ค่า) ก่อนบันทึกลงฐานข้อมูล — ค่าที่โชว์เป็นจุดคือตัวยึดตำแหน่ง ไม่ใช่ Secret Key จริง คัดลอกไปใช้ไม่ได้"
+
+#: includes/class-isxm-admin.php:591
+msgid "Required for Minio/Garage — off for AWS S3 (virtual-hosted)"
+msgstr "จำเป็นสำหรับ Minio/Garage — ปิดสำหรับ AWS S3 (virtual-hosted)"
+
+#: includes/class-isxm-admin.php:592
+msgid "Send ACL public-read"
+msgstr "ส่ง ACL public-read"
+
+#: includes/class-isxm-admin.php:592
+msgid "Enable when the bucket supports ACLs — turn it off if the bucket already uses a public policy"
+msgstr "เปิดเมื่อ bucket รองรับ ACL — ถ้า bucket ใช้ policy สาธารณะอยู่แล้วให้ปิดไว้"
+
+#: includes/class-isxm-admin.php:610 includes/class-isxm-connections.php:242
+msgid "Not configured"
+msgstr "ยังไม่ได้ตั้งค่า"
+
+#: includes/class-isxm-admin.php:633
+msgid "Not configured — go to the “Connections” tab"
+msgstr "ยังไม่ได้ตั้งค่า — ไปที่แท็บ “การเชื่อมต่อ”"
+
+#: includes/class-isxm-admin.php:671
+msgid "This provider has not connected successfully yet — check it in the “Connections” tab first"
+msgstr "เชื่อมต่อ provider นี้ยังไม่สำเร็จ — ไปตรวจสอบที่แท็บ “การเชื่อมต่อ” ก่อน"
+
+#: includes/class-isxm-admin.php:671
+msgid "This provider is not configured yet — set it up in the “Connections” tab first"
+msgstr "ยังไม่ได้ตั้งค่า provider นี้ — ไปตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน"
+
+#: includes/class-isxm-admin.php:735
+msgid "Media URL structure with the current settings (live preview):"
+msgstr "โครงสร้าง URL ของ media ตามการตั้งค่าปัจจุบัน (อัปเดตสด):"
+
+#: includes/class-isxm-admin.php:846 includes/class-isxm-admin.php:852
+#, php-format
+msgid "Last checked %s ago"
+msgstr "ตรวจล่าสุดเมื่อ %sที่แล้ว"
+
+#: includes/class-isxm-admin.php:867
+msgid "Check the real bucket against what the plugin tracks — files deleted from the bucket outside the plugin (console, CLI, cleanup scripts) have their stale meta cleared so Offload/Migrate re-upload them"
+msgstr "ตรวจ bucket จริงเทียบกับข้อมูลที่ปลั๊กอินติดตามไว้ — เจอไฟล์ที่ถูกลบออกจาก bucket นอกปลั๊กอิน (console, CLI, สคริปต์ลบไฟล์) จะล้าง meta ค้างให้ Offload/ย้ายข้อมูลอัปโหลดใหม่ให้เอง"
+
+#: includes/class-isxm-admin.php:881
+msgid "Objects in the current prefix with no matching WordPress media"
+msgstr "object ใน prefix ปัจจุบันที่ไม่มี media ใน WordPress ตรงกัน"
+
+#: includes/class-isxm-background.php:127
+msgid "Every minute (InsightX Storage)"
+msgstr "ทุก 1 นาที (InsightX Storage)"
+
+#: includes/class-isxm-background.php:455 includes/class-isxm-background.php:759 includes/class-isxm-tools.php:1068 includes/class-isxm-tools.php:1227
+msgid "Unknown tool"
+msgstr "ไม่รู้จักเครื่องมือนี้"
+
+#: includes/class-isxm-background.php:463
+msgid "Another start request is in progress — wait a moment and try again"
+msgstr "มีคำสั่งเริ่มงานอื่นกำลังทำอยู่ — รอสักครู่แล้วลองใหม่"
+
+#: includes/class-isxm-background.php:498
+#, php-format
+msgid "The job \"%s\" is running — stop it before starting a new one"
+msgstr "มีงาน \"%s\" กำลังทำงานอยู่ — หยุดงานนั้นก่อนเริ่มงานใหม่"
+
+#: includes/class-isxm-background.php:504
+msgid "Stopped automatically because it stopped responding"
+msgstr "หยุดเองเพราะไม่มีการตอบสนอง"
+
+#: includes/class-isxm-background.php:748 includes/class-isxm-tools.php:99
+msgid "Permission denied"
+msgstr "ไม่มีสิทธิ์ใช้งาน"
+
+#: includes/class-isxm-cli-connection.php:167 includes/class-isxm-tools.php:278
+msgid "Connected to the bucket successfully"
+msgstr "เชื่อมต่อ bucket สำเร็จ"
+
+#: includes/class-isxm-cli-job.php:137
+#, php-format
+msgid "Resumed \"%s\""
+msgstr "ทำต่อ \"%s\" แล้ว"
+
+#: includes/class-isxm-cli-job.php:137
+#, php-format
+msgid "Started \"%s\""
+msgstr "เริ่ม \"%s\" แล้ว"
+
+#: includes/class-isxm-cli-job.php:148
+msgid "This site cannot make loopback requests to itself — the job will not advance in the background. Run `wp isxm job run` (or add it to cron) to drive it to completion"
+msgstr "เว็บนี้เรียก loopback ตัวเองไม่ได้ — งานจะไม่เดินเองในพื้นหลัง ให้รัน `wp isxm job run` (หรือใส่ใน cron) เพื่อไล่ให้จบ"
+
+#: includes/class-isxm-cli-job.php:175
+#, php-format
+msgid "\"%s\" is not running"
+msgstr "\"%s\" ไม่ได้กำลังทำงานอยู่"
+
+#: includes/class-isxm-cli-job.php:179
+#, php-format
+msgid "Stop requested for \"%s\" — the batch in progress finishes first, then it stops (run `wp isxm job list` to check the status)"
+msgstr "สั่งหยุด \"%s\" แล้ว — batch ที่ค้างอยู่จะทำให้จบก่อน แล้วค่อยหยุด (กด `wp isxm job list` ดูสถานะ)"
+
+#: includes/class-isxm-cli-job.php:206
+#, php-format
+msgid "\"%s\" has no checkpoint to resume — use `wp isxm job start %s` to start over"
+msgstr "\"%s\" ไม่มีจุดค้างให้ทำต่อ — ใช้ `wp isxm job start %s` เริ่มใหม่"
+
+#: includes/class-isxm-cli-job.php:241
+#, php-format
+msgid "\"%s\" has no record"
+msgstr "\"%s\" ไม่มี record อยู่แล้ว"
+
+#: includes/class-isxm-cli-job.php:247
+#, php-format
+msgid "Cancel \"%s\"? %s items processed so far — that work stays intact, but the checkpoint will be deleted"
+msgstr "ยกเลิก \"%s\"? ทำไปแล้ว %s รายการ — งานนั้นยังอยู่ครบ แต่จุดที่ค้างจะถูกลบ"
+
+#: includes/class-isxm-cli-job.php:254
+#, php-format
+msgid "Cancelled \"%s\""
+msgstr "ยกเลิก \"%s\" แล้ว"
+
+#: includes/class-isxm-cli-job.php:284
+msgid "No job is running — nothing to do"
+msgstr "ไม่มีงานที่กำลังทำงานอยู่ — ไม่ต้องทำอะไร"
+
+#: includes/class-isxm-cli-job.php:288
+#, php-format
+msgid "Driving job \"%s\"…"
+msgstr "กำลังไล่งาน \"%s\"…"
+
+#: includes/class-isxm-cli-job.php:316
+msgid "Delete the records of every job? (work already done is not touched)"
+msgstr "ลบ record ของทุกงานทิ้ง? (งานที่ทำไปแล้วไม่ถูกแตะ)"
+
+#: includes/class-isxm-cli-job.php:319
+#, php-format
+msgid "Deleted %d records"
+msgstr "ลบไปแล้ว %d record"
+
+#: includes/class-isxm-cli-job.php:356
+#, php-format
+msgid "  %s items"
+msgstr "  %s รายการ"
+
+#: includes/class-isxm-cli-job.php:358
+#, php-format
+msgid "  (%s failed)"
+msgstr "  (ไม่ผ่าน %s)"
+
+#: includes/class-isxm-cli-job.php:387
+msgid "The job was cancelled"
+msgstr "งานถูกยกเลิกแล้ว"
+
+#: includes/class-isxm-cli-job.php:393
+#, php-format
+msgid "%s — %s items processed%s"
+msgstr "%s — ทำไป %s รายการ%s"
+
+#: includes/class-isxm-cli-job.php:396
+#, php-format
+msgid ", %s failed"
+msgstr ", ไม่ผ่าน %s"
+
+#: includes/class-isxm-cli-job.php:401
+msgid "Done: "
+msgstr "เสร็จสิ้น: "
+
+#: includes/class-isxm-cli-job.php:404
+msgid "Paused: "
+msgstr "หยุดไว้: "
+
+#: includes/class-isxm-cli-job.php:405
+#, php-format
+msgid "Resume with: wp isxm job resume %s"
+msgstr "ทำต่อด้วย: wp isxm job resume %s"
+
+#: includes/class-isxm-cli-job.php:408
+msgid "Stopped on error: "
+msgstr "หยุดเพราะข้อผิดพลาด: "
+
+#: includes/class-isxm-cli-job.php:412
+#, php-format
+msgid "Fix it, then resume with: wp isxm job resume %s"
+msgstr "แก้แล้วทำต่อด้วย: wp isxm job resume %s"
+
+#: includes/class-isxm-cli-job.php:415
+msgid "Still running: "
+msgstr "ยังทำงานอยู่: "
+
+#: includes/class-isxm-cli-job.php:422
+msgid "Sample failures:"
+msgstr "ตัวอย่างที่ไม่ผ่าน:"
+
+#: includes/class-isxm-cli-job.php:435
+#, php-format
+msgid "Unknown tool \"%s\" — choose from: %s"
+msgstr "ไม่รู้จักเครื่องมือ \"%s\" — เลือกจาก: %s"
+
+#: includes/class-isxm-cli.php:45
+#, php-format
+msgid "The job \"%s\" is running (%s items) — %s now would run on top of it"
+msgstr "มีงาน \"%s\" กำลังทำงานอยู่ (%s รายการ) — %s ตอนนี้จะทำงานทับกัน"
+
+#: includes/class-isxm-cli.php:46
+#, php-format
+msgid "Stop it first with: wp isxm job pause %s   or use `wp isxm job run` to drive it to completion"
+msgstr "หยุดก่อนด้วย: wp isxm job pause %s   หรือใช้ `wp isxm job run` ไล่ให้จบ"
+
+#: includes/class-isxm-client.php:240 includes/class-isxm-client.php:252
+#, php-format
+msgid "Could not write file %s"
+msgstr "เขียนไฟล์ %s ไม่สำเร็จ"
+
+#: includes/class-isxm-client.php:246
+#, php-format
+msgid "Download of %s is incomplete (got %d of %d bytes — the connection may have dropped mid-download)"
+msgstr "ดาวน์โหลด %s ไม่สมบูรณ์ (ได้ %d จาก %d bytes — อาจขาดการเชื่อมต่อระหว่างดาวน์โหลด)"
+
+#: includes/class-isxm-client.php:298
+msgid "Not fully configured — Bucket, Access Key and Secret Key are required"
+msgstr "ยังตั้งค่าไม่ครบ — ต้องมี Bucket, Access Key และ Secret Key"
+
+#: includes/class-isxm-client.php:306
+#, php-format
+msgid "Bucket \"%s\" not found on this endpoint (HTTP 404)"
+msgstr "ไม่พบ bucket \"%s\" บน endpoint นี้ (HTTP 404)"
+
+#: includes/class-isxm-client.php:307
+msgid "Invalid Access Key/Secret Key, or no permission to access the bucket (HTTP 403)"
+msgstr "Access Key/Secret Key ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง bucket (HTTP 403)"
+
+#: includes/class-isxm-client.php:308
+msgid "Region does not match the bucket (HTTP 301) — check the Region value"
+msgstr "Region ไม่ตรงกับ bucket (HTTP 301) — ตรวจสอบค่า Region"
+
+#: includes/class-isxm-client.php:309
+#, php-format
+msgid "Connection failed (HTTP %d)"
+msgstr "เชื่อมต่อไม่สำเร็จ (HTTP %d)"
+
+#: includes/class-isxm-client.php:424
+msgid "The bucket reported another page of files but sent no continuation token — stopping here so the listing is not mistaken for complete"
+msgstr "Bucket แจ้งว่ายังมีไฟล์หน้าถัดไป แต่ไม่ส่ง continuation token มาด้วย — หยุดไว้ก่อนเพื่อไม่ให้เข้าใจผิดว่ารายการจบแล้ว"
+
+#: includes/class-isxm-client.php:755
+msgid "Could not start the cURL connection"
+msgstr "เริ่มการเชื่อมต่อ cURL ไม่สำเร็จ"
+
+#: includes/class-isxm-client.php:791
+#, php-format
+msgid "Upload failed (cURL %d): %s"
+msgstr "อัปโหลดล้มเหลว (cURL %d): %s"
+
+#: includes/class-isxm-client.php:941
+#, php-format
+msgid "The file is larger than memory can hold (%s, memory_limit %s) and this server has no cURL for streaming uploads"
+msgstr "ไฟล์ใหญ่เกินกว่าที่หน่วยความจำจะรับไหว (%s, memory_limit %s) และเซิร์ฟเวอร์นี้ไม่มี cURL ให้อัปโหลดแบบสตรีม"
+
+#: includes/class-isxm-client.php:994
+msgid "The response from the source bucket is not valid XML (the connection may have dropped while fetching)"
+msgstr "การตอบกลับจาก source bucket ไม่ใช่ XML ที่ถูกต้อง (อาจขาดการเชื่อมต่อระหว่างดึงข้อมูล)"
+
+#: includes/class-isxm-connections.php:36
+msgid "Amazon S3 derives the endpoint from the configured Region automatically — no need to enter it"
+msgstr "Amazon S3 คำนวณ endpoint จาก Region ที่ตั้งไว้ให้อัตโนมัติ ไม่ต้องกรอกเอง"
+
+#: includes/class-isxm-connections.php:37
+msgid "e.g. us-east-1, ap-southeast-1 — must match the region the bucket was created in"
+msgstr "เช่น us-east-1, ap-southeast-1 — ต้องตรงกับ region ที่สร้าง bucket"
+
+#: includes/class-isxm-connections.php:38
+msgid "Not required (derived from Region)"
+msgstr "ไม่ต้องกรอก (คำนวณจาก Region)"
+
+#: includes/class-isxm-connections.php:39
+msgid "AWS Access Key ID, e.g. AKIAIOSFODNN7EXAMPLE"
+msgstr "AWS Access Key ID เช่น AKIAIOSFODNN7EXAMPLE"
+
+#: includes/class-isxm-connections.php:41
+msgid "S3 bucket name, e.g. my-app-media"
+msgstr "ชื่อ S3 Bucket เช่น my-app-media"
+
+#: includes/class-isxm-connections.php:49
+msgid "URL of the Minio server, e.g. https://minio.example.com"
+msgstr "ใส่ URL ของ Minio server เช่น https://minio.example.com"
+
+#: includes/class-isxm-connections.php:50
+msgid "Minio accepts any value (default: us-east-1)"
+msgstr "Minio ใช้ค่าอะไรก็ได้ (default: us-east-1)"
+
+#: includes/class-isxm-connections.php:54
+msgid "Bucket name on Minio"
+msgstr "ชื่อ Bucket บน Minio"
+
+#: includes/class-isxm-connections.php:62
+msgid "URL of the Garage cluster, e.g. https://garage.example.com"
+msgstr "ใส่ URL ของ Garage cluster เช่น https://garage.example.com"
+
+#: includes/class-isxm-connections.php:63
+msgid "Must match s3_region in garage.toml (default: garage)"
+msgstr "ต้องตรงกับ s3_region ที่ตั้งใน garage.toml (default: garage)"
+
+#: includes/class-isxm-connections.php:67
+msgid "Bucket name on Garage"
+msgstr "ชื่อ Bucket บน Garage"
+
+#: includes/class-isxm-connections.php:75
+msgid "Replace <ACCOUNT_ID> with your Cloudflare Account ID (shown on the R2 dashboard)"
+msgstr "แทน <ACCOUNT_ID> ด้วย Cloudflare Account ID (ดูได้จาก R2 dashboard)"
+
+#: includes/class-isxm-connections.php:76
+msgid "Cloudflare R2 always uses \"auto\""
+msgstr "Cloudflare R2 ใช้ \"auto\" เสมอ"
+
+#: includes/class-isxm-connections.php:80
+msgid "R2 bucket name"
+msgstr "ชื่อ R2 Bucket"
+
+#: includes/class-isxm-connections.php:88
+msgid "Replace <REGION> with the Space's region, e.g. https://sgp1.digitaloceanspaces.com"
+msgstr "แทน <REGION> ด้วย region ของ Space เช่น https://sgp1.digitaloceanspaces.com"
+
+#: includes/class-isxm-connections.php:89
+msgid "Must match the Space's region, e.g. sgp1, nyc3, ams3"
+msgstr "ต้องตรงกับ region ของ Space เช่น sgp1, nyc3, ams3"
+
+#: includes/class-isxm-connections.php:93
+msgid "Space name, e.g. my-space-name"
+msgstr "ชื่อ Space เช่น my-space-name"
+
+#: includes/class-isxm-connections.php:101
+msgid "Uses the standard Google Cloud Storage endpoint (HMAC / interoperability mode)"
+msgstr "ใช้ endpoint มาตรฐานของ Google Cloud Storage (HMAC / interoperability mode)"
+
+#: includes/class-isxm-connections.php:102
+msgid "GCS does not use this value for routing — \"auto\" is fine"
+msgstr "GCS ไม่ใช้ค่านี้ในการ route — ใส่ \"auto\" ได้เลย"
+
+#: includes/class-isxm-connections.php:106
+msgid "Google Cloud Storage bucket name"
+msgstr "ชื่อ Google Cloud Storage Bucket"
+
+#: includes/class-isxm-connections.php:114
+msgid "Endpoint of your storage provider (any S3-compatible service)"
+msgstr "ใส่ endpoint ของ storage provider ที่ใช้ (S3-compatible ใดก็ได้)"
+
+#: includes/class-isxm-connections.php:115
+msgid "As specified by the provider, or us-east-1 if unsure"
+msgstr "ใส่ตามที่ provider กำหนด หรือ us-east-1 ถ้าไม่แน่ใจ"
+
+#: includes/class-isxm-connections.php:116
+msgid "Endpoint of your storage provider"
+msgstr "ใส่ endpoint ของ storage provider ที่ใช้"
+
+#: includes/class-isxm-connections.php:117
+msgid "Storage provider Access Key"
+msgstr "Access Key ของ storage provider"
+
+#: includes/class-isxm-connections.php:118
+msgid "Storage provider Secret Key"
+msgstr "Secret Key ของ storage provider"
+
+#: includes/class-isxm-connections.php:119
+msgid "Bucket name"
+msgstr "ชื่อ Bucket"
+
+#: includes/class-isxm-media-library.php:64 includes/class-isxm-media-library.php:131 includes/class-isxm-tools.php:2320
+msgid "In the cloud"
+msgstr "ขึ้น cloud แล้ว"
+
+#: includes/class-isxm-media-library.php:65
+msgid "Not all sizes uploaded"
+msgstr "ขึ้นไม่ครบทุกขนาด"
+
+#: includes/class-isxm-media-library.php:66 includes/class-isxm-media-library.php:133
+msgid "Offload failed"
+msgstr "Offload ไม่ผ่าน"
+
+#: includes/class-isxm-media-library.php:67
+msgid "In another bucket"
+msgstr "อยู่ bucket อื่น"
+
+#: includes/class-isxm-media-library.php:68 includes/class-isxm-media-library.php:132
+msgid "Not in the cloud yet"
+msgstr "ยังไม่ขึ้น cloud"
+
+#: includes/class-isxm-media-library.php:78
+msgid "File missing everywhere"
+msgstr "ไฟล์หายทั้งสองที่"
+
+#: includes/class-isxm-media-library.php:80
+msgid "Neither the local file nor the bucket copy exists anymore — the original must be recovered first (Offload/Migrate cannot re-upload it)"
+msgstr "ทั้งไฟล์ local และไฟล์ใน bucket ไม่มีแล้ว — ต้องหาไฟล์ต้นฉบับกลับมาก่อน (Offload/Migrate อัปโหลดใหม่ไม่ได้)"
+
+#: includes/class-isxm-media-library.php:98
+#, php-format
+msgid " (tried %d times)"
+msgstr " (ลองแล้ว %d ครั้ง)"
+
+#: includes/class-isxm-media-library.php:101
+msgid "Missing: "
+msgstr "ขาด: "
+
+#: includes/class-isxm-media-library.php:130
+msgid "All Storage statuses"
+msgstr "สถานะ Storage ทั้งหมด"
+
+#: includes/class-isxm-media-library.php:265
+msgid "Retry Offload"
+msgstr "ลอง Offload ใหม่"
+
+#: includes/class-isxm-media-library.php:265
+msgid "Offload Now"
+msgstr "Offload ตอนนี้"
+
+#: includes/class-isxm-media-library.php:273
+msgid "Offload to the cloud"
+msgstr "Offload ขึ้น cloud"
+
+#: includes/class-isxm-media-library.php:328
+#, php-format
+msgid "Offloaded %d items"
+msgstr "Offload สำเร็จ %d รายการ"
+
+#: includes/class-isxm-media-library.php:331
+#, php-format
+msgid " — %d failed (<a href=\"%s\">show only failures</a>)"
+msgstr " — ไม่ผ่าน %d รายการ (<a href=\"%s\">ดูเฉพาะที่ไม่ผ่าน</a>)"
+
+#: includes/class-isxm-media-library.php:371
+msgid "Offloading…"
+msgstr "กำลัง offload…"
+
+#: includes/class-isxm-migrate.php:244
+msgid "File for this item not found in the source bucket"
+msgstr "ไม่พบไฟล์ของรายการนี้บน source bucket"
+
+#: includes/class-isxm-migrate.php:252
+msgid "Unknown file location for this attachment"
+msgstr "ไม่ทราบตำแหน่งไฟล์ของ attachment นี้"
+
+#: includes/class-isxm-migrate.php:272
+#, php-format
+msgid "Could not fetch %s from the source (key: %s): %s"
+msgstr "ดึงไฟล์ %s จาก source ไม่สำเร็จ (key: %s): %s"
+
+#: includes/class-isxm-offload.php:294
+msgid "Protected download (WooCommerce / Easy Digital Downloads) — kept on the server so it is never publicly readable in the bucket"
+msgstr "ไฟล์ดาวน์โหลดที่ต้องป้องกัน (WooCommerce / Easy Digital Downloads) — เก็บไว้บนเซิร์ฟเวอร์เพื่อไม่ให้ใครเปิดอ่านได้จาก bucket"
+
+#: includes/class-isxm-offload.php:317 includes/class-isxm-tools.php:568 includes/class-isxm-tools.php:616
+msgid "Storage is not fully configured"
+msgstr "ยังตั้งค่า storage ไม่ครบ"
+
+#: includes/class-isxm-offload.php:327
+msgid "Attachment file data (_wp_attached_file) is corrupted — repair the meta before offloading"
+msgstr "ข้อมูลไฟล์แนบ (_wp_attached_file) เสียหาย — ซ่อม meta ก่อนจึงจะ offload ได้"
+
+#: includes/class-isxm-offload.php:338
+msgid "The file was deleted from the server (it is still in the original bucket) — run \"Download files back from the bucket\" first, then offload again"
+msgstr "ไฟล์ถูกลบออกจากเซิร์ฟเวอร์แล้ว (อยู่บน bucket เดิม) — ใช้เครื่องมือ \"ดาวน์โหลดไฟล์กลับจาก bucket\" ก่อน แล้วค่อย offload ใหม่"
+
+#: includes/class-isxm-offload.php:341 includes/class-isxm-offload.php:407
+msgid "Original file not found on the server"
+msgstr "ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์"
+
+#: includes/class-isxm-offload.php:418
+#, php-format
+msgid "Upload of %s failed: %s"
+msgstr "อัปโหลด %s ไม่สำเร็จ: %s"
+
+#: includes/class-isxm-offload.php:428
+msgid "No files to upload"
+msgstr "ไม่มีไฟล์ให้อัปโหลด"
+
+#: includes/class-isxm-offload.php:675 includes/class-isxm-offload.php:754
+msgid "This item has not been offloaded"
+msgstr "รายการนี้ยังไม่ได้ offload"
+
+#: includes/class-isxm-offload.php:683
+msgid "Unknown destination file location"
+msgstr "ไม่ทราบตำแหน่งไฟล์ปลายทาง"
+
+#: includes/class-isxm-offload.php:698
+msgid "Invalid file name in the attachment data — check the meta"
+msgstr "ชื่อไฟล์ไม่ถูกต้องในข้อมูล attachment — ตรวจสอบ meta"
+
+#: includes/class-isxm-offload.php:719 includes/class-isxm-offload.php:727
+#, php-format
+msgid "Download of %s failed: %s"
+msgstr "ดาวน์โหลด %s ไม่สำเร็จ: %s"
+
+#: includes/class-isxm-offload.php:770
+#, php-format
+msgid "Could not delete %s from the bucket: %s"
+msgstr "ลบ %s จาก bucket ไม่สำเร็จ: %s"
+
+#: includes/class-isxm-settings.php:202
+msgid "Products folder (images)"
+msgstr "โฟลเดอร์สินค้า (รูปภาพ)"
+
+#: includes/class-isxm-settings.php:203
+msgid "Product downloads folder"
+msgstr "โฟลเดอร์ไฟล์ดาวน์โหลดสินค้า"
+
+#: includes/class-isxm-settings.php:204
+msgid "Posts folder"
+msgstr "โฟลเดอร์บทความ"
+
+#: includes/class-isxm-settings.php:205
+msgid "Promotions folder"
+msgstr "โฟลเดอร์โปรโมชั่น"
+
+#: includes/class-isxm-settings.php:206
+msgid "Product categories folder"
+msgstr "โฟลเดอร์หมวดหมู่สินค้า"
+
+#: includes/class-isxm-settings.php:207
+msgid "Brands folder"
+msgstr "โฟลเดอร์แบรนด์"
+
+#: includes/class-isxm-sync.php:725
+msgid "No offloaded media is tracked on this destination, so nothing was deleted — check that the connection matches the bucket and endpoint the media was offloaded to"
+msgstr "ไม่พบ media ที่ offload ไว้บนปลายทางนี้เลย จึงไม่ได้ลบอะไร — ตรวจสอบว่าการเชื่อมต่อตรงกับ bucket และ endpoint ที่ offload media ไว้"
+
+#: includes/class-isxm-sync.php:735
+msgid "Orphan cleanup needs a bucket prefix — without one every object in the bucket that this site does not use would be deleted, including other sites' files and backups. Turn on the prefix in \"File Storage Settings\" first"
+msgstr "การลบ orphan ต้องตั้ง prefix ของ bucket ก่อน — ถ้าไม่มี prefix ทุก object ใน bucket ที่เว็บนี้ไม่ได้ใช้จะถูกลบ รวมถึงไฟล์ของเว็บอื่นและไฟล์ backup เปิด prefix ในหัวข้อ \"การตั้งค่าจัดเก็บไฟล์\" ก่อน"
+
+#: includes/class-isxm-tools.php:166
+msgid "Settings saved"
+msgstr "บันทึกการตั้งค่าเรียบร้อย"
+
+#: includes/class-isxm-tools.php:242
+msgid "Invalid provider"
+msgstr "Provider ไม่ถูกต้อง"
+
+#: includes/class-isxm-tools.php:268
+msgid "Saved — some fields are still missing"
+msgstr "บันทึกแล้ว — ยังกรอกไม่ครบ"
+
+#: includes/class-isxm-tools.php:345 includes/class-isxm-tools.php:2296
+msgid "Storage is not fully configured — save the settings first"
+msgstr "ยังตั้งค่า storage ไม่ครบ — บันทึกการตั้งค่าก่อน"
+
+#: includes/class-isxm-tools.php:350 includes/class-isxm-tools.php:626
+msgid "run_id is missing — please try again"
+msgstr "run_id หายไป — ลองใหม่อีกครั้ง"
+
+#: includes/class-isxm-tools.php:377
+msgid "The destination (bucket) changed since the scan started — run the check again"
+msgstr "ปลายทาง (bucket) เปลี่ยนไปตั้งแต่เริ่มสแกน — กดตรวจสอบใหม่อีกครั้ง"
+
+#: includes/class-isxm-tools.php:468 includes/class-isxm-tools.php:671
+msgid "The scan did not complete — please try again"
+msgstr "สแกนไม่เสร็จสมบูรณ์ — กดลองใหม่อีกครั้ง"
+
+#: includes/class-isxm-tools.php:573
+msgid "run_id is missing — sync with the bucket first"
+msgstr "run_id หายไป — กดซิงก์กับ bucket ก่อน"
+
+#: includes/class-isxm-tools.php:577
+msgid "No check results to clean up — click “Sync with bucket” first"
+msgstr "ไม่มีผลตรวจสอบให้ล้าง — กด “ซิงก์ให้ตรงกับ bucket” ก่อน"
+
+#: includes/class-isxm-tools.php:581
+msgid "The destination (bucket) changed since the check — run the check again before cleaning up"
+msgstr "ปลายทาง (bucket) เปลี่ยนไปตั้งแต่ตรวจสอบ — กดตรวจสอบใหม่อีกครั้งก่อนล้าง"
+
+#: includes/class-isxm-tools.php:651
+msgid "The destination (bucket) changed since it started — please try again"
+msgstr "ปลายทาง (bucket) เปลี่ยนไปตั้งแต่เริ่ม — กดลองใหม่อีกครั้ง"
+
+#: includes/class-isxm-tools.php:693
+#, php-format
+msgid "Could not delete %s: %s"
+msgstr "ลบ %s ไม่สำเร็จ: %s"
+
+#: includes/class-isxm-tools.php:978
+msgid "Upload remaining files to the cloud"
+msgstr "อัปโหลดไฟล์ที่เหลือขึ้น cloud"
+
+#: includes/class-isxm-tools.php:979
+msgid "Retry only the failed items"
+msgstr "ลองใหม่เฉพาะรายการที่ไม่ผ่าน"
+
+#: includes/class-isxm-tools.php:981
+msgid "Remove files from the bucket"
+msgstr "ลบไฟล์ออกจาก bucket"
+
+#: includes/class-isxm-tools.php:982
+msgid "Move files from the source bucket"
+msgstr "ย้ายไฟล์จาก source bucket"
+
+#: includes/class-isxm-tools.php:983
+msgid "Check WooCommerce product files"
+msgstr "ตรวจไฟล์สินค้า WooCommerce"
+
+#: includes/class-isxm-tools.php:987
+msgid "Move file tracking data to the new table"
+msgstr "ย้ายข้อมูลติดตามไฟล์ไปยังตารางใหม่"
+
+#: includes/class-isxm-tools.php:1077
+msgid "The destination storage is not fully configured — set it up in the “Connections” tab first"
+msgstr "ยังตั้งค่า storage ปลายทางไม่ครบ — ตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน"
+
+#: includes/class-isxm-tools.php:1082
+msgid "The source bucket is not fully configured — set it up in the “Connections” tab first"
+msgstr "ยังตั้งค่า source bucket ไม่ครบ — ตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน"
+
+#: includes/class-isxm-tools.php:1092
+msgid "Source and destination point at the same bucket and prefix — choose a different source provider (or change the prefix) first"
+msgstr "source กับ destination ชี้ไปที่ bucket และ prefix เดียวกัน — เลือก provider ต้นทางให้ต่างจากปลายทาง (หรือเปลี่ยน prefix) ก่อน"
+
+#: includes/class-isxm-tools.php:1096
+msgid "WooCommerce not found on this site"
+msgstr "ไม่พบ WooCommerce บนเว็บนี้"
+
+#: includes/class-isxm-tools.php:2301
+msgid "Media file not found"
+msgstr "ไม่พบไฟล์สื่อนี้"
+
+#: includes/class-isxm-tools.php:2319
+msgid "In the cloud, but not all sizes uploaded"
+msgstr "ขึ้น cloud แล้ว แต่ไม่ครบทุกขนาด"
+
+#: includes/class-isxm-tools.php:2406
+msgid "Could not list files in the source bucket"
+msgstr "อ่านรายการไฟล์จาก source bucket ไม่สำเร็จ"
+
+#: includes/class-isxm-wc-downloads.php:23
+msgid "ACL was set but the file is still publicly accessible — this storage may not support object ACLs (e.g. MinIO, Cloudflare R2); disable public access in the bucket policy yourself"
+msgstr "ตั้ง ACL แล้วแต่ไฟล์ยังเข้าถึงแบบ public ได้อยู่ — storage นี้อาจไม่รองรับ object ACL (เช่น MinIO, Cloudflare R2) ต้องปิด public access ที่ระดับ bucket policy เอง"
+
+#: includes/class-isxm-wc-downloads.php:89
+msgid "Product not found"
+msgstr "ไม่พบสินค้า"
+
+#: includes/class-isxm-wc-downloads.php:125
+msgid ": not a media attachment of this site — skipped"
+msgstr ": ไม่ใช่ media attachment ของเว็บนี้ — ข้าม"
+
+#: includes/class-isxm-wc-downloads.php:131
+msgid ": not yet offloaded to the current bucket — offload it first, then run this tool"
+msgstr ": ยังไม่ได้ offload ไปยัง bucket ปัจจุบัน — offload ก่อนแล้วค่อยรันเครื่องมือนี้"
+
+#: includes/class-isxm-wc-downloads.php:173
+msgid "Could not update the download file URL: "
+msgstr "อัปเดต URL ของไฟล์ดาวน์โหลดไม่สำเร็จ: "

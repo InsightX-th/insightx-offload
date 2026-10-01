@@ -1,0 +1,125 @@
+# Changelog
+
+การเปลี่ยนแปลงทั้งหมดของ InsightX Offload รูปแบบอิง [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) และใช้ [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+
+## [Unreleased]
+
+## [0.2.7] - 2026-10-01
+
+### ความปลอดภัย
+- **ไฟล์ขายของ WooCommerce / Easy Digital Downloads ไม่ถูก offload ขึ้น bucket อีก** — bucket ที่ใช้เสิร์ฟรูปต้องเปิดอ่านได้ ไฟล์ขายที่ขึ้นไปจึงหลุดเป็น public เสมอ (MinIO/R2 ไม่สนใจ ACL) ตอนนี้ไฟล์ใน `woocommerce_uploads/` และ `edd/` อยู่ในเครื่องใต้การป้องกันของ WooCommerce เหมือนเดิม
+- **ลูกค้าดาวน์โหลดไฟล์ขายผ่านลิงก์ presigned อายุ 5 นาที** — เดิมเครื่องมือ WooCommerce ตั้ง object เป็น private แต่ให้ URL ตรง ลูกค้าจึงได้ 403
+- กัน PHP object injection ตอนเขียน URL ถาวรลง DB (unserialize ได้เฉพาะ `stdClass`)
+- endpoint รับเฉพาะ http/https (กัน SSRF) และชื่อ bucket รับเฉพาะตัวอักษรที่ S3 อนุญาต (กันการแทรก HTML)
+- token ของ loopback ไม่เปลี่ยนเมื่อ request สลับ http/https (เดิมงานเบื้องหลังโดน 403 ซ้ำๆ)
+
+### ข้อมูลไม่หาย
+- **"Remove from Bucket" ไม่ลบขนาดรูปที่ยังไม่ได้ดาวน์โหลดกลับ** — เดิมถ้าขนาดหนึ่งหายจาก bucket ขนาดที่เหลือจะไม่ถูกดาวน์โหลดแต่ถูกลบออกจาก bucket หายถาวร
+- **Migrate ไม่ข้ามไฟล์ที่ยังไม่ได้ย้าย** — เดิม attachment ที่เคย offload ไป bucket อื่น (เช่น bucket ต้นทาง) ถูกนับว่าย้ายแล้วเสมอ และ bucket ชื่อเดียวกันต่าง endpoint ก็ถูกนับว่าเป็นที่เดียวกัน
+- **"ลบ orphan objects" ปลอดภัยขึ้น** — ไม่ทำงานเมื่อไม่ได้ตั้ง prefix, ไม่ลบไฟล์ที่เพิ่งอัปโหลดภายใน 10 นาที, ไม่ทำงานเมื่อไม่พบ media ของเว็บนี้บนปลายทางเลย และข้อความยืนยันบอกตามจริงว่าไฟล์ของเว็บอื่นใต้ prefix เดียวกันจะถูกลบด้วย
+- ค่า option ที่ถูก serialize ซ้อน 2 ชั้นไม่เสียหลังเขียน URL ถาวร
+- URL ที่เขียนลง DB ใช้ scheme ของ Site Address เสมอ (เดิมรันจาก WP-CLI/cron แล้วได้ http บนเว็บ https)
+- prefix ที่มีแต่จุด (เช่น `.../x`) ไม่ทำให้ URL ใช้งานไม่ได้
+
+### อื่นๆ
+- badge "ยังไม่เคยตรวจสอบกับ bucket จริง" เป็นสีเทา และเอากล่องแจ้งเตือนในแท็บสื่อ/ทรัพยากรออก
+- เพิ่มชุดทดสอบอัตโนมัติ 181 เทสต์ (`php tests/run.php`) และให้ CI รันทุก push/PR — แก้ CI เดิมที่ไม่เคย fail แม้ไฟล์มี syntax error
+
+### รองรับหลายภาษา
+
+- **รองรับหลายภาษา (i18n) — ปลั๊กอินแสดงภาษาตามที่ตั้งไว้ใน WordPress** ตั้งเป็นไทยแสดงไทย ตั้งเป็นอังกฤษแสดงอังกฤษ ภาษาอื่นที่ยังไม่มีคำแปลใช้อังกฤษ — ข้อความต้นฉบับเปลี่ยนเป็นภาษาอังกฤษและครอบ `__()` ครบทุกจุด (หน้าตั้งค่า, หน้าสื่อ, ข้อความ AJAX/งานเบื้องหลัง, WP-CLI) คำแปลไทยเดิมทั้งหมดย้ายไปอยู่ที่ `languages/insightx-offload-th.po` / `.mo`
+- ข้อความฝั่ง JavaScript ย้ายไปอยู่ใน `isxsAdmin.i18n` (แปลฝั่ง PHP) พร้อม helper `fmt()` สำหรับข้อความที่มีตัวเลขปน
+- เวลาเสร็จโดยประมาณ (ETA) ใช้ locale ของผู้ใช้แทน `th-TH` ที่ล็อกไว้ — "น." และ "พรุ่งนี้" แสดงเฉพาะภาษาไทย
+- โหลดไฟล์ภาษาเองผ่าน `load_plugin_textdomain()` + header `Domain Path: /languages` เพราะปลั๊กอินไม่ได้แจกผ่าน wordpress.org
+- แจ้งเตือน "InsightX Storage ยังเปิดอยู่" กรองคำแปลด้วย `wp_kses()` แทนการ echo HTML ทั้งก้อน
+- เพิ่ม `CHANGELOG.md`
+
+## [0.2.6] - 2026-08-24
+
+- เพิ่มตัวเลือก "ไม่สร้างรูปขนาดย่อ" — ปิดการสร้าง thumbnail/medium/large/1536/2048 ของ
+  WordPress ทั้งหมด (รวมขนาดของ WooCommerce และธีม) อัปโหลดหนึ่งครั้งได้ไฟล์เดียวขึ้น bucket
+  เก็บไฟล์ต้นฉบับไว้ตามเดิมโดยไม่ย่อเป็น -scaled เหมาะกับเว็บที่ดึงรูปแบบ headless แล้วไปย่อเอง
+  ปิดไว้เป็นค่าเริ่มต้น มีผลกับไฟล์ที่อัปโหลดใหม่เท่านั้น (คำเตือน: เปิดแล้ว srcset จะหาย
+  และทุกจุดที่ขอรูปเล็กจะได้ไฟล์เต็มแทน)
+
+## [0.2.5] - 2026-08-24
+
+- แก้บั๊ก: ไฟล์ที่ถูก offload ไปวางที่ root ของ bucket (ปิด Prefix + ระบุประเภทเนื้อหาไม่ได้ ทำให้
+  base_key เป็นค่าว่าง) ถูกทุกจุดของปลั๊กอินตีความว่า "ยังไม่ได้ offload" เพราะเช็คด้วย empty()
+  แทน isset() — ผลคือ URL ไม่เปลี่ยนไปเสิร์ฟจาก bucket, การเขียน URL ถาวรลง DB ไม่ทำงาน,
+  Sync มองไม่เห็นไฟล์ที่มีอยู่จริง
+- แก้ URL ที่ได้จากไฟล์ root ของ bucket มี slash คู่ (เช่น .../bucket//file.jpg)
+
+## [0.2.4] - 2026-08-24
+
+- เพิ่มการแยกโฟลเดอร์บน bucket ตามประเภทเนื้อหา — สินค้า ไฟล์ดาวน์โหลดสินค้า บทความ โปรโมชั่น
+  หมวดหมู่สินค้า และแบรนด์ แยกคนละโฟลเดอร์ ตั้งชื่อโฟลเดอร์เองได้ทั้งหมด (ปิดไว้เป็นค่าเริ่มต้น
+  เว็บที่ใช้อยู่เดิม path ไม่เปลี่ยน)
+- ไฟล์ที่ระบุประเภทได้จะข้าม Year & Month กับ Object Version อัตโนมัติ ทำให้ได้ path สั้นอ่านง่าย
+  เช่น `products/ชื่อสินค้า/ไฟล์.jpg` — ส่วนไฟล์ที่ระบุประเภทไม่ได้ยังใช้สองอย่างนั้นตามเดิม
+  ซึ่งเป็นสิ่งเดียวที่กันไฟล์ชื่อซ้ำข้ามเดือนไม่ให้ทับกัน
+- ระบุประเภทได้ทั้งตอนอัปโหลดปกติและตอน Bulk Offload / WP-CLI ที่ไม่มีหน้าอ้างอิง
+- เปลี่ยนชื่อโฟลเดอร์หรือปิดฟีเจอร์ ไม่ย้ายไฟล์ที่อัปโหลดไปแล้ว — path เดิมถูกบันทึกต่อไฟล์อยู่แล้ว
+- แก้เลขเวอร์ชันในไฟล์ปลั๊กอินที่ยังค้างเป็น 0.2.2 ให้ตรงกับส่วนหัวปลั๊กอิน
+
+## [0.2.3] - 2026-08-21
+
+- Offload เร็วขึ้นหลายเท่า โดยเฉพาะเว็บที่ bucket อยู่ไกล — เดิมทุกไฟล์เปิดการเชื่อมต่อใหม่หมด
+  ไฟล์แนบหนึ่งรายการมีทั้งไฟล์ต้นฉบับและ thumbnail อีกหลายขนาด จึงเสียเวลาไปกับการจับมือ
+  (TCP/TLS handshake) มากกว่าการส่งไฟล์จริง ตอนนี้ใช้การเชื่อมต่อเดิมต่อเนื่องทั้งชุด
+- ข้ามการคำนวณ checksum ของไฟล์ตอนเซ็นคำขอเมื่อต่อผ่าน https (UNSIGNED-PAYLOAD) —
+  เดิมต้องอ่านไฟล์ทั้งไฟล์เพิ่มอีกหนึ่งรอบก่อนส่ง ซึ่งกินเวลามากกับไฟล์วิดีโอขนาดใหญ่
+  ใช้ filter `isxs_sign_upload_payload` เปิดกลับได้ ถ้าปลายทางไม่รองรับ
+- การลองใหม่เมื่อปลายทางตอบ error ชั่วคราว จะไม่รอข้ามรอบการทำงานอีกต่อไป — เดิมรอ 1 และ 3 วินาที
+  ต่อไฟล์ ทำให้รอบหนึ่งหมดเวลาไปกับการรอเพียงไม่กี่รายการ
+- แก้เลขเวอร์ชันในไฟล์ปลั๊กอินที่ยังค้างเป็น 0.2.1 ตั้งแต่รุ่น 0.2.2 ซึ่งทำให้ตัวตรวจอัปเดต
+  เด้งแจ้งเวอร์ชันใหม่ซ้ำแม้ติดตั้งแล้ว
+
+## [0.2.2] - 2026-08-21
+
+- แจ้งเตือนอัปเดตในหน้า Plugins ของ WordPress เองแล้ว โดยอ่านจาก GitHub Releases —
+  เดิมต้องดาวน์โหลด zip มาอัปโหลดเองทุกครั้ง เพราะปลั๊กอินไม่ได้อยู่บน wordpress.org
+  และไม่มีอะไรบอก WordPress ว่ามีเวอร์ชันใหม่
+  หมายเหตุ: เวอร์ชันนี้ยังต้องติดตั้งด้วยมือครั้งสุดท้าย ตัวตรวจอัปเดตถึงจะเริ่มทำงาน
+
+## [0.2.1] - 2026-08-21
+
+- แก้ปัญหา "ไม่พบไฟล์ต้นฉบับบนเซิร์ฟเวอร์" ทั้งที่ไฟล์ยังอยู่ในโฟลเดอร์ uploads — เว็บที่ย้ายมาจาก
+  เซิร์ฟเวอร์อื่นมักมี path เต็มของเครื่องเก่าค้างใน `_wp_attached_file` ตอนนี้ปลั๊กอินแปลง path
+  ให้อ้างอิงโฟลเดอร์ uploads ปัจจุบันเสมอ ทั้งตอน Offload, Download กลับ, Migrate และ Sync
+- แยกกรณี "meta ของไฟล์แนบเสียหาย" ออกจาก "ไฟล์หาย" เป็นคนละข้อความ เพราะวิธีแก้ต่างกัน
+- Sync: badge บอกผลการตรวจโดยตรง — เขียวเมื่อตรงกันทั้งหมด แดงเมื่อพบรายการไม่ตรงกันหรือซิงก์ไม่สำเร็จ
+  และจำผลไว้ข้ามการโหลดหน้า (เดิม badge ค้างเป็นสีเทาจนกว่าจะรีเฟรช)
+- Sync: ซ่อนแถบความคืบหน้าเมื่อตรวจเสร็จ แทนที่จะค้างเต็มแถบคู่กับ "0 รายการ"
+- ปุ่ม "ยกเลิก" ของทุกเครื่องมือเป็นสีแดง ให้ต่างจากปุ่ม "หยุด" ชัดเจน
+- Secret Key now encrypted with AES-256-GCM (format ENC3) — with Auth tag that detects value tampering
+  (previously AES-256-CBC had no tag) — old values (legacy format) will still be read automatically
+- Loopback runner token will automatically rotate when the site URL changes (domain change,
+  http → https) — the old token will no longer be usable, and jobs in progress will automatically
+  resume via Healthcheck
+
+## [0.2.0] - 2026-08-19
+
+- Sync card แสดง badge สถานะการตรวจสอบล่าสุด (ตรวจล่าสุดวันนี้ / X วันที่แล้ว) หน้าปุ่ม แทนข้อความใต้คำอธิบาย
+- ติดตามเวลาที่ตรวจ Sync ครั้งล่าสุด พร้อมแจ้งเตือนเมื่อไม่ได้ตรวจนานเกิน 7 วัน (stale)
+
+## [0.1.0] - 2026-08-18
+
+- UI ใหม่แบบ Offload Media: header + Offload Status dropdown + แท็บ
+  สื่อ/ทรัพยากร/เครื่องมือ/ย้ายข้อมูล/ช่วยเหลือ
+- ฟีเจอร์ใหม่ Assets Pull (Rewrite Asset URLs ผ่าน CDN + Force HTTPS)
+- เพิ่มการแสดงผลเวลาที่ใช้ไปแล้ว (Elapsed Time) ในทุก Bulk Tool Card
+- รองรับ WP-CLI เต็มรูปแบบผ่านคำสั่ง `wp isxm` (status, job list, offload, download, remove, sync, migrate)
+- URL Preview เต็มรูปแบบ (Scheme/Domain/Prefix/Year-Month/Version/Filename)
+- PHP class prefix ใช้ ISXM_ — CLI ใช้ `wp isxm`
+
+[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.6...v0.2.7
+[0.2.6]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.5...v0.2.6
+[0.2.5]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/InsightX-th/insightx-offload/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/InsightX-th/insightx-offload/releases/tag/v0.1.0

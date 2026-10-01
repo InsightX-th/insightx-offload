@@ -1,7 +1,7 @@
 name: Tests
 
-# Runs PHP syntax checks across supported PHP versions (PHP 7.4+)
-# on every push to main and every pull request.
+# Runs PHP syntax checks and the unit suite (tests/run.php) across supported
+# PHP versions (PHP 7.4+) on every push to main and every pull request.
 on:
   push:
     branches: [ main ]
@@ -21,6 +21,11 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
 
+      # xargs, not `find -exec … \;` — find exits 0 even when php -l fails,
+      # so a syntax error never failed the job.
       - name: Check PHP syntax
         run: |
-          find . -type f -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+          find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -n1 php -l
+
+      - name: Unit tests
+        run: php tests/run.php

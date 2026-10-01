@@ -60,7 +60,8 @@ class ISXM_Client {
 
         if ( $s['endpoint'] !== '' ) {
             $parsed         = wp_parse_url( $s['endpoint'] );
-            $this->scheme   = ! empty( $parsed['scheme'] ) ? $parsed['scheme'] : 'https';
+            // Never anything but http(s), whatever older saved settings hold.
+            $this->scheme   = ( ! empty( $parsed['scheme'] ) && strtolower( $parsed['scheme'] ) === 'http' ) ? 'http' : 'https';
             $this->endpoint = ! empty( $parsed['host'] ) ? $parsed['host'] : preg_replace( '#^https?://#', '', untrailingslashit( $s['endpoint'] ) );
             if ( ! empty( $parsed['port'] ) ) {
                 $this->endpoint .= ':' . $parsed['port'];
@@ -236,19 +237,19 @@ class ISXM_Client {
         $written        = @filesize( $temp );
         if ( $written === false ) {
             self::discard( $temp );
-            return new WP_Error( 'isxs_write_failed', sprintf( 'เขียนไฟล์ %s ไม่สำเร็จ', wp_basename( $destination ) ) );
+            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'insightx-offload' ), wp_basename( $destination ) ) );
         }
         if ( $content_length !== '' && (int) $content_length !== (int) $written ) {
             self::discard( $temp );
             return new WP_Error(
                 'isxs_truncated_download',
-                sprintf( 'ดาวน์โหลด %s ไม่สมบูรณ์ (ได้ %d จาก %d bytes — อาจขาดการเชื่อมต่อระหว่างดาวน์โหลด)', $key, (int) $written, (int) $content_length )
+                sprintf( __( 'Download of %s is incomplete (got %d of %d bytes — the connection may have dropped mid-download)', 'insightx-offload' ), $key, (int) $written, (int) $content_length )
             );
         }
 
         if ( ! @rename( $temp, $destination ) ) {
             self::discard( $temp );
-            return new WP_Error( 'isxs_write_failed', sprintf( 'เขียนไฟล์ %s ไม่สำเร็จ', wp_basename( $destination ) ) );
+            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'insightx-offload' ), wp_basename( $destination ) ) );
         }
 
         return true;
@@ -294,7 +295,7 @@ class ISXM_Client {
      */
     public function test_connection() {
         if ( $this->bucket === '' || $this->access_key === '' || $this->secret_key === '' ) {
-            return new WP_Error( 'isxs_not_configured', 'ยังตั้งค่าไม่ครบ — ต้องมี Bucket, Access Key และ Secret Key' );
+            return new WP_Error( 'isxs_not_configured', __( 'Not fully configured — Bucket, Access Key and Secret Key are required', 'insightx-offload' ) );
         }
 
         $response = $this->request( 'HEAD', '' );
@@ -302,10 +303,10 @@ class ISXM_Client {
 
         $code = wp_remote_retrieve_response_code( $response );
         if ( $code === 200 ) return true;
-        if ( $code === 404 ) return new WP_Error( 'isxs_no_bucket', sprintf( 'ไม่พบ bucket "%s" บน endpoint นี้ (HTTP 404)', $this->bucket ) );
-        if ( $code === 403 ) return new WP_Error( 'isxs_forbidden', 'Access Key/Secret Key ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง bucket (HTTP 403)' );
-        if ( $code === 301 ) return new WP_Error( 'isxs_wrong_region', 'Region ไม่ตรงกับ bucket (HTTP 301) — ตรวจสอบค่า Region' );
-        return new WP_Error( 'isxs_http_' . $code, sprintf( 'เชื่อมต่อไม่สำเร็จ (HTTP %d)', $code ) );
+        if ( $code === 404 ) return new WP_Error( 'isxs_no_bucket', sprintf( __( 'Bucket "%s" not found on this endpoint (HTTP 404)', 'insightx-offload' ), $this->bucket ) );
+        if ( $code === 403 ) return new WP_Error( 'isxs_forbidden', __( 'Invalid Access Key/Secret Key, or no permission to access the bucket (HTTP 403)', 'insightx-offload' ) );
+        if ( $code === 301 ) return new WP_Error( 'isxs_wrong_region', __( 'Region does not match the bucket (HTTP 301) — check the Region value', 'insightx-offload' ) );
+        return new WP_Error( 'isxs_http_' . $code, sprintf( __( 'Connection failed (HTTP %d)', 'insightx-offload' ), $code ) );
     }
 
     /**
@@ -353,7 +354,7 @@ class ISXM_Client {
      *                                   ('' = whole bucket). One prefixed page is
      *                                   how an attachment's own objects are
      *                                   checked without listing the whole bucket.
-     * @return array{keys:string[],next_token:string}|WP_Error
+     * @return array{keys:string[],next_token:string,modified:array<string,int>}|WP_Error
      */
     public function list_objects_keys_page( $continuation_token = '', $max_keys = 1000, $prefix = '' ) {
         $query = [ 'list-type' => '2', 'max-keys' => (string) $max_keys ];
@@ -375,11 +376,16 @@ class ISXM_Client {
         }
         // SimpleXML decodes entities itself, so a key like "a&amp;b.jpg"
         // comes back as the real "a&b.jpg" without a manual unescape step.
-        $keys = [];
+        $keys     = [];
+        $modified = []; // key => unix time, when the listing says
         foreach ( $xml->Contents as $object ) {
             $key = (string) $object->Key;
             if ( $key !== '' ) {
                 $keys[] = $key;
+                $time   = strtotime( (string) $object->LastModified );
+                if ( $time !== false ) {
+                    $modified[ $key ] = $time;
+                }
             }
         }
 
@@ -388,7 +394,7 @@ class ISXM_Client {
             return $next_token;
         }
 
-        return [ 'keys' => $keys, 'next_token' => $next_token ];
+        return [ 'keys' => $keys, 'next_token' => $next_token, 'modified' => $modified ];
     }
 
     /**
@@ -415,7 +421,7 @@ class ISXM_Client {
         if ( $token === '' ) {
             return new WP_Error(
                 'isxs_pagination_broken',
-                'Bucket แจ้งว่ายังมีไฟล์หน้าถัดไป แต่ไม่ส่ง continuation token มาด้วย — หยุดไว้ก่อนเพื่อไม่ให้เข้าใจผิดว่ารายการจบแล้ว'
+                __( 'The bucket reported another page of files but sent no continuation token — stopping here so the listing is not mistaken for complete', 'insightx-offload' )
             );
         }
         return $token;
@@ -486,6 +492,72 @@ class ISXM_Client {
     /* ---------------------------------------------------------------------
      * Internals — AWS Signature Version 4
      * ------------------------------------------------------------------ */
+
+    /**
+     * A time-limited GET URL for a private object (SigV4 query-string auth).
+     *
+     * Lets a private object be handed to one visitor — e.g. a paid
+     * WooCommerce download — without making it public. The link stops
+     * working after $expires seconds.
+     *
+     * @param string   $key     Object key.
+     * @param int      $expires Lifetime in seconds (S3 caps it at 7 days).
+     * @param int|null $now     Signing time (tests); current time when null.
+     * @return string
+     */
+    public function presigned_url( $key, $expires = 300, $now = null ) {
+        $now        = $now === null ? time() : (int) $now;
+        $amz_date   = gmdate( 'Ymd\THis\Z', $now );
+        $date_stamp = gmdate( 'Ymd', $now );
+        $scope      = $date_stamp . '/' . $this->region . '/s3/aws4_request';
+
+        $query = [
+            'X-Amz-Algorithm'     => 'AWS4-HMAC-SHA256',
+            'X-Amz-Credential'    => $this->access_key . '/' . $scope,
+            'X-Amz-Date'          => $amz_date,
+            'X-Amz-Expires'       => (string) min( max( (int) $expires, 1 ), 604800 ),
+            'X-Amz-SignedHeaders' => 'host',
+        ];
+        ksort( $query );
+        $query_parts = [];
+        foreach ( $query as $q_key => $q_value ) {
+            $query_parts[] = rawurlencode( $q_key ) . '=' . rawurlencode( $q_value );
+        }
+        $canonical_query = implode( '&', $query_parts );
+        $uri             = $this->canonical_uri( $key );
+
+        $canonical_request = implode( "\n", [
+            'GET',
+            $uri,
+            $canonical_query,
+            'host:' . $this->host() . "\n",
+            'host',
+            'UNSIGNED-PAYLOAD',
+        ] );
+        $string_to_sign = implode( "\n", [
+            'AWS4-HMAC-SHA256',
+            $amz_date,
+            $scope,
+            hash( 'sha256', $canonical_request ),
+        ] );
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $date_stamp ) );
+
+        return $this->scheme . '://' . $this->host() . $uri . '?' . $canonical_query . '&X-Amz-Signature=' . $signature;
+    }
+
+    /**
+     * SigV4 signing key for one day, shared by signed requests and
+     * presigned URLs.
+     *
+     * @param string $date_stamp Ymd.
+     * @return string Raw binary key.
+     */
+    private function signing_key( $date_stamp ) {
+        $k_date    = hash_hmac( 'sha256', $date_stamp, 'AWS4' . $this->secret_key, true );
+        $k_region  = hash_hmac( 'sha256', $this->region, $k_date, true );
+        $k_service = hash_hmac( 'sha256', 's3', $k_region, true );
+        return hash_hmac( 'sha256', 'aws4_request', $k_service, true );
+    }
 
     /**
      * Host header value for the request.
@@ -593,11 +665,7 @@ class ISXM_Client {
             hash( 'sha256', $canonical_request ),
         ] );
 
-        $k_date    = hash_hmac( 'sha256', $date_stamp, 'AWS4' . $this->secret_key, true );
-        $k_region  = hash_hmac( 'sha256', $this->region, $k_date, true );
-        $k_service = hash_hmac( 'sha256', 's3', $k_region, true );
-        $k_signing = hash_hmac( 'sha256', 'aws4_request', $k_service, true );
-        $signature = hash_hmac( 'sha256', $string_to_sign, $k_signing );
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $date_stamp ) );
 
         $authorization = sprintf(
             'AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s',
@@ -684,7 +752,7 @@ class ISXM_Client {
         $ch = self::curl_handle();
         if ( ! $ch ) {
             fclose( $handle );
-            return new WP_Error( 'isxs_curl_init_failed', 'เริ่มการเชื่อมต่อ cURL ไม่สำเร็จ' );
+            return new WP_Error( 'isxs_curl_init_failed', __( 'Could not start the cURL connection', 'insightx-offload' ) );
         }
         $curl_options = [
             CURLOPT_URL            => $url,
@@ -698,6 +766,7 @@ class ISXM_Client {
             CURLOPT_CONNECTTIMEOUT => 15,
             CURLOPT_SSL_VERIFYPEER => (bool) $ssl_verify,
             CURLOPT_SSL_VERIFYHOST => $ssl_verify ? 2 : 0,
+            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ];
         // WordPress ships its own CA bundle — point at it when it exists
         // (the standard WP_Http_Curl behaviour); otherwise let cURL fall
@@ -719,7 +788,7 @@ class ISXM_Client {
         fclose( $handle );
 
         if ( $errno ) {
-            return new WP_Error( 'isxs_curl_' . $errno, sprintf( 'อัปโหลดล้มเหลว (cURL %d): %s', $errno, $error ) );
+            return new WP_Error( 'isxs_curl_' . $errno, sprintf( __( 'Upload failed (cURL %d): %s', 'insightx-offload' ), $errno, $error ) );
         }
 
         return [
@@ -869,7 +938,7 @@ class ISXM_Client {
             return new WP_Error(
                 'isxs_file_too_large',
                 sprintf(
-                    'ไฟล์ใหญ่เกินกว่าที่หน่วยความจำจะรับไหว (%s, memory_limit %s) และเซิร์ฟเวอร์นี้ไม่มี cURL ให้อัปโหลดแบบสตรีม',
+                    __( 'The file is larger than memory can hold (%s, memory_limit %s) and this server has no cURL for streaming uploads', 'insightx-offload' ),
                     size_format( $size ),
                     ini_get( 'memory_limit' )
                 )
@@ -922,7 +991,7 @@ class ISXM_Client {
     private static function malformed_response_error() {
         return new WP_Error(
             'isxs_malformed_response',
-            'การตอบกลับจาก source bucket ไม่ใช่ XML ที่ถูกต้อง (อาจขาดการเชื่อมต่อระหว่างดึงข้อมูล)'
+            __( 'The response from the source bucket is not valid XML (the connection may have dropped while fetching)', 'insightx-offload' )
         );
     }
 }

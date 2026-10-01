@@ -96,7 +96,7 @@ class ISXM_Tools {
      */
     private function guard() {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => 'ไม่มีสิทธิ์ใช้งาน' ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Permission denied', 'insightx-offload' ) ], 403 );
         }
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
     }
@@ -152,7 +152,7 @@ class ISXM_Tools {
 
         // Detect a destination switch before saving overwrites $current —
         // the frontend uses this to reset all 4 tools' UI/resume state,
-        // since a stale "ทำต่อ" pointing at the previous destination is
+        // since a stale "Resume" pointing at the previous destination is
         // meaningless once it has changed. Connection details (bucket/
         // endpoint/etc.) now live entirely in ISXM_Connections keyed by
         // provider slug, so a provider change here IS a destination change;
@@ -163,12 +163,12 @@ class ISXM_Tools {
         ISXM_Settings::save( $settings );
 
         wp_send_json_success( [
-            'message'              => 'บันทึกการตั้งค่าเรียบร้อย',
+            'message'              => __( 'Settings saved', 'insightx-offload' ),
             'public_base_url'      => ISXM_Settings::public_base_url(),
             'destination_changed'  => $destination_changed,
             // Refreshed on every response: an admin page left open past the
             // nonce's 24h lifetime otherwise starts failing every save with
-            // a bare "เกิดข้อผิดพลาด" and no way to tell why.
+            // a bare "An error occurred" and no way to tell why.
             'nonce'                => wp_create_nonce( self::NONCE_ACTION ),
         ] );
     }
@@ -214,12 +214,18 @@ class ISXM_Tools {
      */
     private static function sanitize_prefix( $value ) {
         $value = sanitize_text_field( wp_unslash( (string) $value ) );
-        $value = trim( str_replace( [ '..', '\\' ], '', $value ) );
+        $value = str_replace( '\\', '', $value );
         $value = preg_replace( '#[\x00-\x1f\x7f]#', '', $value );
-        if ( $value === '' ) {
+        // Drop empty and dot-only segments rather than deleting '..' as a
+        // substring: that turned "..." into ".", and a "./" segment in a key
+        // is collapsed by browsers, so every URL under it 404'd.
+        $segments = array_filter( explode( '/', trim( $value ) ), function ( $segment ) {
+            return trim( $segment, '. ' ) !== '';
+        } );
+        if ( ! $segments ) {
             return '';
         }
-        return trailingslashit( ltrim( $value, '/' ) );
+        return implode( '/', $segments ) . '/';
     }
 
     /**
@@ -233,7 +239,7 @@ class ISXM_Tools {
         $providers = ISXM_Connections::providers();
         $provider  = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : '';
         if ( ! array_key_exists( $provider, $providers ) ) {
-            wp_send_json_error( [ 'message' => 'Provider ไม่ถูกต้อง' ] );
+            wp_send_json_error( [ 'message' => __( 'Invalid provider', 'insightx-offload' ) ] );
         }
 
         $current = ISXM_Connections::get( $provider );
@@ -259,7 +265,7 @@ class ISXM_Tools {
         ISXM_Connections::save_one( $provider, $config );
 
         $connected = false;
-        $message   = 'บันทึกแล้ว — ยังกรอกไม่ครบ';
+        $message   = __( 'Saved — some fields are still missing', 'insightx-offload' );
 
         if ( ISXM_Connections::is_configured( $provider ) ) {
             $client = new ISXM_Client( ISXM_Connections::get( $provider ) );
@@ -269,7 +275,7 @@ class ISXM_Tools {
                 ISXM_Connections::save_status( $provider, 'error', $message );
             } else {
                 $connected = true;
-                $message   = 'เชื่อมต่อ bucket สำเร็จ';
+                $message   = __( 'Connected to the bucket successfully', 'insightx-offload' );
                 ISXM_Connections::save_status( $provider, 'ok', $message );
             }
         }
@@ -282,7 +288,7 @@ class ISXM_Tools {
             'configured'          => ISXM_Connections::is_configured( $provider ),
             'affects_destination' => ( $s['provider'] === $provider ),
             'affects_source'      => ( $s['source_provider'] === $provider ),
-            // See ajax_save_settings(): the "บันทึกและเชื่อมต่อ" button was
+            // See ajax_save_settings(): the "Save and connect" button was
             // the one place with no nonce refresh at all, so on a page left
             // open overnight it simply stopped connecting.
             'nonce'               => wp_create_nonce( self::NONCE_ACTION ),
@@ -330,18 +336,18 @@ class ISXM_Tools {
      *    the temp files are deleted.
      *
      * The scan never writes the database; it only reports (the client then
-     * offers "ล้าง meta ค้าง" which calls isxs_sync_apply).
+     * offers "Clear stale meta" which calls isxs_sync_apply).
      */
     public function ajax_sync_scan() {
         $this->guard();
 
         if ( ! ISXM_Settings::is_configured() ) {
-            wp_send_json_error( [ 'message' => 'ยังตั้งค่า storage ไม่ครบ — บันทึกการตั้งค่าก่อน' ] );
+            wp_send_json_error( [ 'message' => __( 'Storage is not fully configured — save the settings first', 'insightx-offload' ) ] );
         }
 
         $run_id = isset( $_POST['run_id'] ) ? sanitize_key( wp_unslash( $_POST['run_id'] ) ) : '';
         if ( $run_id === '' ) {
-            wp_send_json_error( [ 'message' => 'run_id หายไป — ลองใหม่อีกครั้ง' ] );
+            wp_send_json_error( [ 'message' => __( 'run_id is missing — please try again', 'insightx-offload' ) ] );
         }
         if ( function_exists( 'set_time_limit' ) ) {
             @set_time_limit( self::MAX_REQUEST_SECONDS );
@@ -368,7 +374,7 @@ class ISXM_Tools {
         if ( $state['bucket'] !== ISXM_Settings::get( 'bucket' ) || $state['endpoint'] !== ISXM_Settings::get( 'endpoint' ) ) {
             ISXM_Sync::delete_state( $run_id );
             ISXM_Sync::cleanup_run_files( $run_id );
-            wp_send_json_error( [ 'message' => 'ปลายทาง (bucket) เปลี่ยนไปตั้งแต่เริ่มสแกน — กดตรวจสอบใหม่อีกครั้ง' ] );
+            wp_send_json_error( [ 'message' => __( 'The destination (bucket) changed since the scan started — run the check again', 'insightx-offload' ) ] );
         }
 
         $processed = 0;
@@ -459,7 +465,7 @@ class ISXM_Tools {
         // show the user.
         $e = ISXM_Sync::load_or_build_expected( $run_id );
         if ( $e === null ) {
-            $errors[] = 'สแกนไม่เสร็จสมบูรณ์ — กดลองใหม่อีกครั้ง';
+            $errors[] = __( 'The scan did not complete — please try again', 'insightx-offload' );
             ISXM_Sync::delete_state( $run_id );
             return [ 'processed' => $processed, 'errors' => $errors ];
         }
@@ -513,7 +519,7 @@ class ISXM_Tools {
 
         // Attachments whose primary is gone AND the local copy is gone too
         // are a data-loss situation worth calling out before anything is
-        // cleaned (re-upload would fail with "ไม่พบไฟล์ต้นฉบับ").
+        // cleaned (re-upload would fail with "Original file not found").
         $data_loss_ids = [];
         if ( ! empty( $stale_ids ) ) {
             ISXM_Tools::prime_caches( $stale_ids );
@@ -559,20 +565,20 @@ class ISXM_Tools {
         $this->guard();
 
         if ( ! ISXM_Settings::is_configured() ) {
-            wp_send_json_error( [ 'message' => 'ยังตั้งค่า storage ไม่ครบ' ] );
+            wp_send_json_error( [ 'message' => __( 'Storage is not fully configured', 'insightx-offload' ) ] );
         }
 
         $run_id = isset( $_POST['run_id'] ) ? sanitize_key( wp_unslash( $_POST['run_id'] ) ) : '';
         if ( $run_id === '' ) {
-            wp_send_json_error( [ 'message' => 'run_id หายไป — กดซิงก์กับ bucket ก่อน' ] );
+            wp_send_json_error( [ 'message' => __( 'run_id is missing — sync with the bucket first', 'insightx-offload' ) ] );
         }
         $result = ISXM_Sync::get_result( $run_id );
         if ( ! is_array( $result ) || empty( $result['stale_ids'] ) ) {
-            wp_send_json_error( [ 'message' => 'ไม่มีผลตรวจสอบให้ล้าง — กด “ซิงก์ให้ตรงกับ bucket” ก่อน' ] );
+            wp_send_json_error( [ 'message' => __( 'No check results to clean up — click “Sync with bucket” first', 'insightx-offload' ) ] );
         }
         if ( $result['bucket'] !== ISXM_Settings::get( 'bucket' ) || $result['endpoint'] !== ISXM_Settings::get( 'endpoint' ) ) {
             ISXM_Sync::delete_result( $run_id );
-            wp_send_json_error( [ 'message' => 'ปลายทาง (bucket) เปลี่ยนไปตั้งแต่ตรวจสอบ — กดตรวจสอบใหม่อีกครั้งก่อนล้าง' ] );
+            wp_send_json_error( [ 'message' => __( 'The destination (bucket) changed since the check — run the check again before cleaning up', 'insightx-offload' ) ] );
         }
 
         $out = ISXM_Sync::cleanup_stale( $result['stale_ids'] );
@@ -607,12 +613,17 @@ class ISXM_Tools {
         $this->guard();
 
         if ( ! ISXM_Settings::is_configured() ) {
-            wp_send_json_error( [ 'message' => 'ยังตั้งค่า storage ไม่ครบ' ] );
+            wp_send_json_error( [ 'message' => __( 'Storage is not fully configured', 'insightx-offload' ) ] );
+        }
+
+        $blocked = ISXM_Sync::orphan_cleanup_blocked();
+        if ( $blocked ) {
+            wp_send_json_error( [ 'message' => $blocked->get_error_message() ] );
         }
 
         $run_id = isset( $_POST['run_id'] ) ? sanitize_key( wp_unslash( $_POST['run_id'] ) ) : '';
         if ( $run_id === '' ) {
-            wp_send_json_error( [ 'message' => 'run_id หายไป — ลองใหม่อีกครั้ง' ] );
+            wp_send_json_error( [ 'message' => __( 'run_id is missing — please try again', 'insightx-offload' ) ] );
         }
         if ( function_exists( 'set_time_limit' ) ) {
             @set_time_limit( self::MAX_REQUEST_SECONDS );
@@ -631,12 +642,13 @@ class ISXM_Tools {
                 'scanned'  => 0,
                 'bucket'   => ISXM_Settings::get( 'bucket' ),
                 'endpoint' => ISXM_Settings::get( 'endpoint' ),
+                'started'  => time(),
             ];
         }
         if ( $state['bucket'] !== ISXM_Settings::get( 'bucket' ) || $state['endpoint'] !== ISXM_Settings::get( 'endpoint' ) ) {
             delete_transient( ISXM_Sync::ORPHAN_STATE_TRANSIENT_PREFIX . $run_id );
             ISXM_Sync::cleanup_run_files( $run_id );
-            wp_send_json_error( [ 'message' => 'ปลายทาง (bucket) เปลี่ยนไปตั้งแต่เริ่ม — กดลองใหม่อีกครั้ง' ] );
+            wp_send_json_error( [ 'message' => __( 'The destination (bucket) changed since it started — please try again', 'insightx-offload' ) ] );
         }
 
         $processed = 0;
@@ -656,7 +668,12 @@ class ISXM_Tools {
             } elseif ( $state['phase'] === 'delete' ) {
                 $e = ISXM_Sync::load_or_build_expected( $run_id );
                 if ( $e === null ) {
-                    $errors[] = 'สแกนไม่เสร็จสมบูรณ์ — กดลองใหม่อีกครั้ง';
+                    $errors[] = __( 'The scan did not complete — please try again', 'insightx-offload' );
+                    break;
+                }
+                $blocked = ISXM_Sync::orphan_map_blocked( $e );
+                if ( $blocked ) {
+                    $errors[] = $blocked->get_error_message();
                     break;
                 }
                 $client = new ISXM_Client();
@@ -666,18 +683,14 @@ class ISXM_Tools {
                     $errors[] = $page->get_error_message();
                     break;
                 }
-                foreach ( $page['keys'] as $key ) {
-                    if ( isset( $e['map'][ $key ] ) ) {
-                        continue;
-                    }
-                    if ( $prefix !== '' && strpos( $key, $prefix ) !== 0 ) {
-                        continue;
-                    }
+                // Runs started before 'started' was recorded: treat as starting now.
+                $run_started = isset( $state['started'] ) ? (int) $state['started'] : time();
+                foreach ( ISXM_Sync::orphan_candidates( $page, $e, $prefix, $run_started ) as $key ) {
                     $result = $client->delete_object( $key );
                     if ( ! is_wp_error( $result ) ) {
                         $state['deleted']++;
                     } else {
-                        $errors[] = sprintf( 'ลบ %s ไม่สำเร็จ: %s', $key, $result->get_error_message() );
+                        $errors[] = sprintf( __( 'Could not delete %s: %s', 'insightx-offload' ), $key, $result->get_error_message() );
                     }
                 }
                 $state['scanned'] += count( $page['keys'] );
@@ -962,16 +975,16 @@ class ISXM_Tools {
      */
     public static function tools() {
         return [
-            'offload'      => 'อัปโหลดไฟล์ที่เหลือขึ้น cloud',
-            'retry_failed' => 'ลองใหม่เฉพาะรายการที่ไม่ผ่าน',
-            'download'     => 'ดาวน์โหลดไฟล์กลับจาก bucket',
-            'remove'       => 'ลบไฟล์ออกจาก bucket',
-            'migrate'      => 'ย้ายไฟล์จาก source bucket',
-            'wc_downloads' => 'ตรวจไฟล์สินค้า WooCommerce',
+            'offload'      => __( 'Upload remaining files to the cloud', 'insightx-offload' ),
+            'retry_failed' => __( 'Retry only the failed items', 'insightx-offload' ),
+            'download'     => __( 'Download files back from the bucket', 'insightx-offload' ),
+            'remove'       => __( 'Remove files from the bucket', 'insightx-offload' ),
+            'migrate'      => __( 'Move files from the source bucket', 'insightx-offload' ),
+            'wc_downloads' => __( 'Check WooCommerce product files', 'insightx-offload' ),
             // Internal: has no card in the UI. Runs once per site to copy
             // legacy `_isxs_offload` postmeta into the ISXM_Items ledger,
             // and is started automatically (see maybe_start_backfill()).
-            'backfill'     => 'ย้ายข้อมูลติดตามไฟล์ไปยังตารางใหม่',
+            'backfill'     => __( 'Move file tracking data to the new table', 'insightx-offload' ),
         ];
     }
 
@@ -1052,7 +1065,7 @@ class ISXM_Tools {
      */
     public static function precheck_tool( $tool ) {
         if ( ! self::is_known_tool( $tool ) ) {
-            return new WP_Error( 'isxs_unknown_tool', 'ไม่รู้จักเครื่องมือนี้' );
+            return new WP_Error( 'isxs_unknown_tool', __( 'Unknown tool', 'insightx-offload' ) );
         }
         // Pure database work — it must be able to run on a site whose
         // storage settings are incomplete, or an install that never
@@ -1061,12 +1074,12 @@ class ISXM_Tools {
             return true;
         }
         if ( ! ISXM_Settings::is_configured() ) {
-            return new WP_Error( 'isxs_not_configured', 'ยังตั้งค่า storage ปลายทางไม่ครบ — ตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน' );
+            return new WP_Error( 'isxs_not_configured', __( 'The destination storage is not fully configured — set it up in the “Connections” tab first', 'insightx-offload' ) );
         }
         if ( $tool === 'migrate' ) {
             $s = ISXM_Settings::all();
             if ( $s['source_bucket'] === '' || $s['source_access_key'] === '' || $s['source_secret_key'] === '' ) {
-                return new WP_Error( 'isxs_no_source', 'ยังตั้งค่า source bucket ไม่ครบ — ตั้งค่าที่แท็บ “การเชื่อมต่อ” ก่อน' );
+                return new WP_Error( 'isxs_no_source', __( 'The source bucket is not fully configured — set it up in the “Connections” tab first', 'insightx-offload' ) );
             }
             // Same bucket AND same prefix is a bucket-to-itself copy: every
             // object would be read and written back over itself. Same bucket
@@ -1076,11 +1089,11 @@ class ISXM_Tools {
                 && $s['source_endpoint'] === $s['endpoint']
                 && $s['source_prefix'] === ISXM_Settings::key_prefix()
             ) {
-                return new WP_Error( 'isxs_same_bucket', 'source กับ destination ชี้ไปที่ bucket และ prefix เดียวกัน — เลือก provider ต้นทางให้ต่างจากปลายทาง (หรือเปลี่ยน prefix) ก่อน' );
+                return new WP_Error( 'isxs_same_bucket', __( 'Source and destination point at the same bucket and prefix — choose a different source provider (or change the prefix) first', 'insightx-offload' ) );
             }
         }
         if ( $tool === 'wc_downloads' && ! class_exists( 'WC_Product' ) ) {
-            return new WP_Error( 'isxs_no_woocommerce', 'ไม่พบ WooCommerce บนเว็บนี้' );
+            return new WP_Error( 'isxs_no_woocommerce', __( 'WooCommerce not found on this site', 'insightx-offload' ) );
         }
 
         // is_configured() only proves the fields are filled in — it never
@@ -1211,7 +1224,7 @@ class ISXM_Tools {
                 case 'backfill':
                     return $instance->batch_backfill( $cursor );
             }
-            return new WP_Error( 'isxs_unknown_tool', 'ไม่รู้จักเครื่องมือนี้' );
+            return new WP_Error( 'isxs_unknown_tool', __( 'Unknown tool', 'insightx-offload' ) );
         } finally {
             $instance->set_progress_job( null );
             ISXM_Client::set_deadline( 0 );
@@ -1529,6 +1542,10 @@ class ISXM_Tools {
 
             foreach ( $pending['ids'] as $id ) {
                 $result = $process( $id );
+                if ( is_wp_error( $result ) && $result->get_error_code() === 'isxs_protected_download' ) {
+                    // Deliberately kept local (sold file) — a skip, not a failure.
+                    $result = true;
+                }
                 if ( is_wp_error( $result ) ) {
                     $errors[] = sprintf( '#%d %s: %s', $id, wp_basename( (string) get_attached_file( $id ) ), $result->get_error_message() );
                 } elseif ( is_array( $result ) && ! $defer_rewrite ) {
@@ -1936,7 +1953,8 @@ class ISXM_Tools {
         $done           = false;
         $stalled        = false;
         $cursor         = $after_token;
-        $current_bucket = ISXM_Settings::get( 'bucket' );
+        $current_bucket   = ISXM_Settings::get( 'bucket' );
+        $current_endpoint = ISXM_Settings::get( 'endpoint' );
 
         do {
             $batch = ISXM_Migrate::scan_source_batch( $s3_token );
@@ -1971,7 +1989,15 @@ class ISXM_Tools {
                 // re-running Migrate (and re-scanning an interrupted page)
                 // fast instead of redoing completed work.
                 $info = ISXM_Offload::get_record( $id );
-                if ( is_array( $info ) && isset( $info['bucket'] ) && $info['bucket'] === $current_bucket ) {
+                // Bucket AND endpoint, like status_for(): source and
+                // destination may share a bucket name (MinIO "media" → R2
+                // "media"), and a name-only match counted every item as
+                // already migrated while nothing was copied.
+                // A record for any OTHER bucket (typically the very source
+                // being migrated away from) is exactly what still needs work.
+                $on_destination = is_array( $info ) && isset( $info['bucket'] ) && $info['bucket'] === $current_bucket
+                    && ( $info['endpoint'] ?? '' ) === $current_endpoint;
+                if ( $on_destination ) {
                     // The meta record can go stale when objects are deleted
                     // out-of-band (bucket console/CLI) — it would otherwise
                     // claim the file is on the destination forever while the
@@ -1982,10 +2008,10 @@ class ISXM_Tools {
                     // can't be verified falls through to migrate_attachment()
                     // below and re-uploads every file of the attachment.
                     if ( $verify && ! ISXM_Sync::primary_exists_on_destination( $info ) ) {
-                        $info = null;
+                        $on_destination = false;
                     }
                 }
-                if ( is_array( $info ) ) {
+                if ( $on_destination ) {
                     // Already offloaded — skip the expensive re-download/re-upload,
                     // but still re-check the URL rewrite every time: a
                     // source_public_base_url that was wrong when this file was
@@ -2194,7 +2220,7 @@ class ISXM_Tools {
      * same counter while the denominator only covered the pending set (so
      * the run reported far past 100%), and it overwrote the pending scan's
      * cursor with its own — two different scans sharing one resume pointer,
-     * which made "ทำต่อ" skip real work. Reconciling meta against the real
+     * which made "Resume" skip real work. Reconciling meta against the real
      * bucket is what the Sync tool does, with ONE bucket listing for the
      * whole library instead of one per attachment.
      *
@@ -2267,12 +2293,12 @@ class ISXM_Tools {
         $this->guard();
 
         if ( ! ISXM_Settings::is_configured() ) {
-            wp_send_json_error( [ 'message' => 'ยังตั้งค่า storage ไม่ครบ — บันทึกการตั้งค่าก่อน' ] );
+            wp_send_json_error( [ 'message' => __( 'Storage is not fully configured — save the settings first', 'insightx-offload' ) ] );
         }
 
         $id = isset( $_POST['attachment_id'] ) ? (int) $_POST['attachment_id'] : 0;
         if ( ! $id || get_post_type( $id ) !== 'attachment' ) {
-            wp_send_json_error( [ 'message' => 'ไม่พบไฟล์สื่อนี้' ] );
+            wp_send_json_error( [ 'message' => __( 'Media file not found', 'insightx-offload' ) ] );
         }
 
         $pairs = call_user_func( $this->offload_one_callback(), $id );
@@ -2290,8 +2316,8 @@ class ISXM_Tools {
         wp_send_json_success( [
             'status'  => $status['status'],
             'message' => $status['status'] === 'partial'
-                ? 'ขึ้น cloud แล้ว แต่ไม่ครบทุกขนาด'
-                : 'ขึ้น cloud แล้ว',
+                ? __( 'In the cloud, but not all sizes uploaded', 'insightx-offload' )
+                : __( 'In the cloud', 'insightx-offload' ),
         ] );
     }
 
@@ -2377,7 +2403,7 @@ class ISXM_Tools {
             // on the same page instead of claiming it finished.
             $message = ! empty( $result['errors'] )
                 ? $result['errors'][0]
-                : 'อ่านรายการไฟล์จาก source bucket ไม่สำเร็จ';
+                : __( 'Could not list files in the source bucket', 'insightx-offload' );
             return new WP_Error( 'isxs_source_unreachable', $message );
         }
 

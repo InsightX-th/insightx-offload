@@ -236,7 +236,7 @@ class ISXM_Items {
             'origin'         => isset( $record['origin'] ) ? (string) $record['origin'] : 'offload',
             'files'          => wp_json_encode( $files ),
             'missing'        => $missing ? wp_json_encode( $missing ) : null,
-            // Denormalized so "ขึ้นไม่ครบทุกขนาด" is an indexed count rather
+            // Denormalized so "Not all sizes uploaded" is an indexed count rather
             // than a LIKE for the serialized 'missing' key.
             'is_partial'     => $missing ? 1 : 0,
             'updated_at'     => current_time( 'mysql', true ),
