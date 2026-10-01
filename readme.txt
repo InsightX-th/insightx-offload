@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.8
+Stable tag: 0.2.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,9 @@ Bulk Offload เขียน URL ลงฐานข้อมูลแบบห�
 ได้ — สามารถใช้คำสั่ง `wp isxm job run --once` ใส่ใน Crontab ของเซิร์ฟเวอร์เพื่อรัน Runner เบื้องหลังได้ทันทีโดยไม่ต้องเปิดหน้าเว็บทิ้งไว้
 
 == Changelog ==
+
+= 0.2.9 =
+* เพิ่มภาพปกและไอคอน InsightX Offload สำหรับหน้ารายละเอียดและการอัปเดตปลั๊กอิน พร้อมไฟล์ต้นฉบับ
 
 = 0.2.8 =
 * เขียน URL ถาวรของ JSON แบบ escape slash (Elementor และ page builder อื่น) ทั้งตอน offload และตอนลบออกจาก bucket

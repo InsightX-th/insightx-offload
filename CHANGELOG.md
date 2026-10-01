@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-10-01
+
+- เพิ่มภาพปกขนาด 1544×500 และ 772×250 พร้อมไอคอนขนาด 256×256 และ 128×128 สำหรับตัวตรวจอัปเดตปลั๊กอิน
+- เก็บภาพต้นฉบับและพรอมป์ต์สำหรับการปรับปรุงงานออกแบบในอนาคต
+
 ## [0.2.8] - 2026-10-01
 
 - **เขียน URL ถาวรของ JSON แบบ escape slash (Elementor และ page builder อื่น)** — ทั้งตอน offload และตอนลบออกจาก bucket เดิมเนื้อหาที่เก็บเป็น JSON ยังชี้ไฟล์ในเครื่องอยู่ (ซึ่งอาจถูกลบไปแล้วถ้าเปิด Remove Local Media)
@@ -118,7 +123,8 @@
 - URL Preview เต็มรูปแบบ (Scheme/Domain/Prefix/Year-Month/Version/Filename)
 - PHP class prefix ใช้ ISXM_ — CLI ใช้ `wp isxm`
 
-[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.8...HEAD
+[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.9...HEAD
+[0.2.9]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.5...v0.2.6
