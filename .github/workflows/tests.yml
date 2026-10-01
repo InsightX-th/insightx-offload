@@ -1,14 +1,44 @@
-name: Tests
+name: CI
 
-# Runs PHP syntax checks and the unit suite (tests/run.php) across supported
-# PHP versions (PHP 7.4+) on every push to main and every pull request.
+# Lint (PHP 7.4+ compatibility), unit suite (tests/run.php) on every
+# supported PHP version, and a real WordPress + MySQL integration run
+# (tests/e2e/run.sh) on every push to main and every pull request.
 on:
   push:
     branches: [ main ]
   pull_request:
 
 jobs:
-  php:
+  # PHP 7.4+ compatibility (readme.txt "Requires PHP"). Only the
+  # PHPCompatibilityWP ruleset — no style rules. RemovedExtensions is excluded
+  # because it matches any name starting with an old extension's prefix
+  # (e.g. a method named recode_*() is reported as ext/recode).
+  lint:
+    name: Lint (PHP 7.4+ compatibility)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Install PHPCompatibilityWP
+        run: |
+          composer global config --no-interaction allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require --no-interaction --no-progress \
+            squizlabs/php_codesniffer:^3 phpcompatibility/phpcompatibility-wp:^2 dealerdirect/phpcodesniffer-composer-installer
+
+      - name: Check PHP 7.4+ compatibility
+        run: |
+          "$(composer global config bin-dir --absolute --quiet)/phpcs" -p \
+            --standard=PHPCompatibilityWP --runtime-set testVersion 7.4- \
+            --exclude=PHPCompatibility.Extensions.RemovedExtensions \
+            --extensions=php --ignore='*/libs/*,*/vendor/*' .
+
+  unit-tests:
+    name: Unit tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -32,7 +62,8 @@ jobs:
 
   # Real WordPress + MySQL end to end (tests/e2e/run.sh). One PHP version is
   # enough here — the matrix above already covers the language versions.
-  e2e:
+  integration:
+    name: Integration (PHP 8.2, WP latest)
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -67,7 +98,7 @@ jobs:
           echo "$WEED_SHA256  /tmp/weed.tgz" | sha256sum -c -
           tar -xzf /tmp/weed.tgz -C /tmp
 
-      - name: End-to-end
+      - name: End-to-end (tests/e2e/run.sh)
         env:
           DB_HOST: 127.0.0.1:3306
           DB_USER: root
