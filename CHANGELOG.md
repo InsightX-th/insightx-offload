@@ -1,8 +1,6 @@
-# Changelog
+## [0.2.11] - 2026-10-01
 
-การเปลี่ยนแปลงทั้งหมดของ InsightX Offload รูปแบบอิง [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) และใช้ [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-
-## [Unreleased]
+- แท็บ "บันทึกการเปลี่ยนแปลง" ในหน้า "ดูรายละเอียด" แสดงจาก CHANGELOG.md โดยตรง ไม่มีหัวเรื่อง คำโปรย และหัวข้อ Unreleased อีก — readme.txt ไม่มีหัวข้อ Changelog ซ้ำแล้ว
 
 ## [0.2.10] - 2026-10-01
 
@@ -126,16 +124,3 @@
 - รองรับ WP-CLI เต็มรูปแบบผ่านคำสั่ง `wp isxm` (status, job list, offload, download, remove, sync, migrate)
 - URL Preview เต็มรูปแบบ (Scheme/Domain/Prefix/Year-Month/Version/Filename)
 - PHP class prefix ใช้ ISXM_ — CLI ใช้ `wp isxm`
-
-[Unreleased]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.9...HEAD
-[0.2.9]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.8...v0.2.9
-[0.2.8]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.7...v0.2.8
-[0.2.7]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.6...v0.2.7
-[0.2.6]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.5...v0.2.6
-[0.2.5]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.4...v0.2.5
-[0.2.4]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.3...v0.2.4
-[0.2.3]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.2...v0.2.3
-[0.2.2]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/InsightX-th/insightx-offload/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/InsightX-th/insightx-offload/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/InsightX-th/insightx-offload/releases/tag/v0.1.0
